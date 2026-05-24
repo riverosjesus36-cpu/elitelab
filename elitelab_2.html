@@ -1,0 +1,2531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EliteLab</title>
+<meta name="theme-color" content="#e53e3e">
+<meta name="description" content="EliteLab — Productividad gamificada">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EliteLab">
+<script id="pwa-init">
+try{(function(){
+  try{
+    var manifest={name:"EliteLab",short_name:"EliteLab",description:"Productividad gamificada",start_url:"./",display:"standalone",background_color:"#0a0a0a",theme_color:"#e53e3e"};
+    var blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+    var murl=URL.createObjectURL(blob);
+    var lnk=document.createElement('link');lnk.rel='manifest';lnk.href=murl;document.head.appendChild(lnk);
+  }catch(e){}
+  try{
+    var sw='self.addEventListener("install",function(e){self.skipWaiting();});self.addEventListener("activate",function(e){clients.claim();});self.addEventListener("fetch",function(e){e.respondWith(fetch(e.request).catch(function(){return new Response("");}));});';
+    if('serviceWorker' in navigator){
+      var swb=new Blob([sw],{type:'text/javascript'});
+      var swu=URL.createObjectURL(swb);
+      navigator.serviceWorker.register(swu).catch(function(){});
+    }
+  }catch(e){}
+  window._dip=null;
+  try{
+    window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._dip=e;});
+    window.addEventListener('appinstalled',function(){window._dip=null;window._installed=true;});
+  }catch(e){}
+})();}catch(e){}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;overflow-x:hidden;}
+:root{
+  --red:#e53e3e;--red2:#c53030;--red-dim:rgba(229,62,62,0.12);--red-b:rgba(229,62,62,0.3);
+  --bg:#0a0a0a;--bg2:#111;--bg3:#181818;--bg4:#1f1f1f;--bg5:#252525;
+  --bor:rgba(255,255,255,0.07);--bor2:rgba(255,255,255,0.12);
+  --t:#fff;--t2:#a0a0a0;--t3:#555;
+  --green:#48bb78;--blue:#4299e1;--orange:#ed8936;--purple:#9f7aea;--yellow:#f6e05e;
+}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px;}
+.app{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sb{width:210px;background:var(--bg2);border-right:1px solid var(--bor);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
+.sb-logo{padding:14px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bor);}
+.sb-logo-icon{color:var(--red);font-size:20px;font-style:italic;font-weight:800;}
+.sb-logo-txt{font-size:15px;font-weight:700;}
+.sb-sec{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;padding:14px 16px 5px;}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;font-size:13px;color:var(--t2);transition:all 0.12s;user-select:none;border-left:2px solid transparent;}
+.ni:hover{background:rgba(255,255,255,0.04);color:#fff;}
+.ni.active{background:var(--red);color:#fff;border-left-color:transparent;}
+.ni-ico{font-size:14px;width:17px;text-align:center;flex-shrink:0;}
+.badge{margin-left:auto;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;}
+.b-top{background:var(--red);color:#fff;}
+.b-pronto{background:#7c3aed;color:#fff;}
+.sb-user{margin-top:auto;padding:11px 14px;border-top:1px solid var(--bor);display:flex;align-items:center;gap:9px;}
+.av{width:28px;height:28px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+
+/* TOPBAR */
+.main{margin-left:210px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.tb{height:48px;background:var(--bg2);border-bottom:1px solid var(--bor);display:flex;align-items:center;padding:0 22px;gap:6px;position:sticky;top:0;z-index:50;}
+.tb-brand{display:flex;align-items:center;gap:5px;color:var(--t2);font-size:13px;}
+.tb-ico{color:var(--red);font-size:14px;font-style:italic;font-weight:800;}
+.tb-sep{color:var(--t3);margin:0 2px;}
+.tb-pg{font-size:13px;font-weight:600;}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.tb-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;background:var(--red);color:#fff;}
+.tb-btn:hover{background:var(--red2);}
+.tb-icon{background:none;border:none;cursor:pointer;color:var(--t2);padding:5px;font-size:15px;}
+
+/* CONTENT */
+.cnt{padding:24px;flex:1;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--bor);border-radius:10px;padding:16px;}
+.card2{background:var(--bg3);border:1px solid var(--bor);border-radius:10px;padding:16px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all 0.12s;}
+.btn-r{background:var(--red);color:#fff;}
+.btn-r:hover{background:var(--red2);}
+.btn-r-lg{background:var(--red);color:#fff;padding:11px 22px;font-size:14px;border-radius:10px;}
+.btn-r-lg:hover{background:var(--red2);}
+.btn-ghost{background:transparent;border:1px solid var(--bor2);color:var(--t2);}
+.btn-ghost:hover{background:var(--bg3);color:#fff;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-danger{background:rgba(229,62,62,0.1);border:1px solid var(--red-b);color:var(--red);}
+.btn-xs{padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;right:24px;background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(229,62,62,0.4);z-index:50;}
+.fab:hover{background:var(--red2);}
+
+/* INPUTS */
+.inp{background:var(--bg3);border:1px solid var(--bor2);border-radius:8px;padding:9px 13px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;width:100%;outline:none;transition:border-color 0.12s;}
+.inp:focus{border-color:var(--red);}
+.inp::placeholder{color:var(--t3);}
+select.inp option{background:var(--bg3);color:#fff;}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:200;}
+.mod{background:var(--bg2);border:1px solid var(--bor2);border-radius:12px;padding:24px;width:430px;max-width:96vw;max-height:92vh;overflow-y:auto;}
+.mod-t{font-size:16px;font-weight:700;margin-bottom:18px;}
+.fg{margin-bottom:13px;}
+.fl{font-size:11px;color:var(--t2);margin-bottom:5px;display:block;letter-spacing:0.3px;}
+.frow{display:flex;gap:10px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:26px;right:26px;background:var(--bg2);border:1px solid var(--bor2);border-radius:10px;padding:13px 18px;display:flex;align-items:center;gap:11px;z-index:300;animation:su .3s ease;box-shadow:0 8px 30px rgba(0,0,0,.5);}
+@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast-t{font-size:14px;font-weight:700;color:var(--green);}
+.toast-s{font-size:11px;color:var(--t3);}
+
+/* TAGS/PILLS */
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
+.pill-r{background:rgba(229,62,62,0.15);color:var(--red);}
+.pill-g{background:rgba(72,187,120,0.15);color:var(--green);}
+.pill-b{background:rgba(66,153,225,0.15);color:var(--blue);}
+.pill-o{background:rgba(237,137,54,0.15);color:var(--orange);}
+.pill-p{background:rgba(159,122,234,0.15);color:var(--purple);}
+.pill-y{background:rgba(246,224,94,0.15);color:var(--yellow);}
+.pill-gray{background:rgba(255,255,255,0.08);color:var(--t2);}
+
+/* PBAR */
+.pbar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;}
+.pfill{height:100%;border-radius:2px;transition:width .4s;}
+
+/* SECTION TITLE */
+.st{font-size:18px;font-weight:800;margin-bottom:4px;}
+.st-sub{font-size:13px;color:var(--t3);}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px;}
+
+/* TABS */
+.tabs{display:flex;background:var(--bg3);border-radius:9px;padding:3px;gap:2px;margin-bottom:18px;}
+.tab{flex:1;padding:7px 12px;border:none;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;background:transparent;color:var(--t3);}
+.tab.on{background:var(--red);color:#fff;}
+.tab-line{display:flex;gap:0;border-bottom:1px solid var(--bor);margin-bottom:18px;}
+.tabl{padding:10px 20px;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--t2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;}
+.tabl.on{color:#fff;border-bottom-color:var(--red);}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+
+/* DEL BTN */
+.del{background:none;border:none;cursor:pointer;color:var(--t3);font-size:13px;padding:3px;transition:color .12s;}
+.del:hover{color:var(--red);}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--t3);font-size:13px;}
+.empty .ei{font-size:36px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+const SK='elitelab_v3';
+
+const DEF={
+  user:{name:'jesus_riveros',avatar:'J'},
+  showBanner:true,
+  habits:[
+    {id:1,name:'Leer 30 min',streak:0,doneToday:false,xp:15,cat:'aprendizaje',icon:'📗'},
+    {id:2,name:'Meditación',streak:0,doneToday:false,xp:10,cat:'mente',icon:'🧘'},
+    {id:3,name:'Revisar metas',streak:0,doneToday:false,xp:10,cat:'trabajo',icon:'🎯'},
+    {id:4,name:'Networking',streak:0,doneToday:false,xp:15,cat:'trabajo',icon:'🤝'},
+    {id:5,name:'Review fin...',streak:0,doneToday:false,xp:20,cat:'finanzas',icon:'💰'},
+  ],
+  tasks:[
+    {id:1,name:'Armar pitch deck del negocio',status:'todo',priority:'Alta',tags:['negocio','estrategia']},
+    {id:2,name:'Analizar la competencia',status:'todo',priority:'Media',tags:['investigacion','estrategia']},
+    {id:3,name:'Configurar flujo de caja',status:'todo',priority:'Urgente',tags:['finanzas']},
+    {id:4,name:'Definir personas del producto',status:'todo',priority:'Alta',tags:['marketing','producto']},
+    {id:5,name:'Optimizar perfil de LinkedIn',status:'todo',priority:'Media',tags:['marketing','networking']},
+    {id:6,name:'Validar idea con 10 personas',status:'todo',priority:'Alta',tags:['producto']},
+  ],
+  goals:[
+    {id:1,name:'Ingreso mensual ₲ 10.000.000',cur:0,target:10000000,unit:'₲',cat:'Finanzas',icon:'💰',color:'#48bb78'},
+    {id:2,name:'Crear producto digital',cur:0,target:1,unit:'producto',cat:'Carrera',icon:'🚀',color:'#ed8936'},
+    {id:3,name:'Fondo de emergencia',cur:0,target:30000000,unit:'₲',cat:'Finanzas',icon:'💰',color:'#4299e1'},
+    {id:4,name:'Leer 24 libros al año',cur:0,target:24,unit:'libros',cat:'Personal',icon:'⭐',color:'#ed8936'},
+  ],
+  transactions:[],
+  savingsGoals:[
+    {id:1,name:'Ingreso mensual ₲ 10.000.000',cur:0,target:10000000,color:'#48bb78'},
+    {id:2,name:'Fondo de emergencia',cur:0,target:30000000,color:'#4299e1'},
+  ],
+  pomodoro:{workMin:25,breakMin:5,longBreakMin:15,sessionsToday:0,total:0},
+  scores:{fisico:0,productividad:0,financiero:100,disciplina:1,mental:0},
+  player:{level:1,xp:0,xpToNext:150},
+  subscriptions:[],
+  boletos:[],
+  tarjetas:[],
+  events:[],
+  missions:[],
+  lastReset:new Date().toDateString(),
+};
+
+function load(){
+  try{
+    const r=localStorage.getItem(SK);
+    if(!r) return DEF;
+    const d=JSON.parse(r);
+    if(d.lastReset!==new Date().toDateString()){
+      d.habits=(d.habits||[]).map(h=>({...h,doneToday:false}));
+      d.pomodoro={...DEF.pomodoro,...(d.pomodoro||{}),sessionsToday:0};
+      d.lastReset=new Date().toDateString();
+    }
+    return {...DEF,...d,scores:{...DEF.scores,...(d.scores||{})},user:{...DEF.user,...(d.user||{})},player:{...DEF.player,...(d.player||{})}};
+  }catch{return DEF;}
+}
+function save(s){try{localStorage.setItem(SK,JSON.stringify(s));}catch{}}
+
+const PAGES={
+  dashboard:'Dashboard',habitos:'Hábitos',tareas:'Tareas',metas:'Metas',
+  progreso:'Progreso',logros:'Logros',ranking:'Ranking',modo_ia:'Modo IA',
+  referir:'Refiere y Gana',plan:'Plan del día',finanzas:'Finanzas',
+  entrenamiento:'Entrenamiento',calendario:'Calendario',enfoque:'Enfoque',
+  perfil:'Perfil',familia:'Familia',config:'Configuración',
+};
+const NAV=[
+  {sec:'PRINCIPAL',items:[
+    {id:'dashboard',ico:'▣',l:'Dashboard'},
+    {id:'habitos',ico:'🔥',l:'Hábitos'},
+    {id:'tareas',ico:'○',l:'Tareas'},
+  ]},
+  {sec:'PROGRESO',items:[
+    {id:'metas',ico:'◎',l:'Metas'},
+    {id:'progreso',ico:'〜',l:'Progreso'},
+    {id:'logros',ico:'♛',l:'Logros'},
+    {id:'ranking',ico:'♔',l:'Ranking',badge:'TOP',bc:'b-top'},
+    {id:'modo_ia',ico:'✦',l:'Modo IA',badge:'PRONTO',bc:'b-pronto'},
+    {id:'referir',ico:'◈',l:'Refiere y Gana',badge:'TOP',bc:'b-top'},
+  ]},
+  {sec:'HERRAMIENTAS',items:[
+    {id:'plan',ico:'≡',l:'Plan del día'},
+    {id:'finanzas',ico:'⊟',l:'Finanzas'},
+    {id:'entrenamiento',ico:'↗',l:'Entrenamiento'},
+    {id:'calendario',ico:'▦',l:'Calendario'},
+    {id:'enfoque',ico:'◷',l:'Enfoque'},
+  ]},
+  {sec:'CONFIG',items:[
+    {id:'perfil',ico:'⊙',l:'Perfil'},
+    {id:'familia',ico:'⊕',l:'Familia'},
+    {id:'config',ico:'⊗',l:'Configuración'},
+  ]},
+];
+
+/* RADAR */
+function Radar({scores}){
+  const cats=[
+    {l:'Físico',k:'fisico'},{l:'Productividad',k:'productividad'},
+    {l:'Financiero',k:'financiero'},{l:'Disciplina',k:'disciplina'},{l:'Mental',k:'mental'}
+  ];
+  const n=cats.length,cx=120,cy=120,r=85;
+  const pt=(a,rr)=>({x:cx+rr*Math.sin(a),y:cy-rr*Math.cos(a)});
+  const angles=cats.map((_,i)=>(2*Math.PI*i)/n);
+  const rings=[.2,.4,.6,.8,1];
+  const rp=rings.map(f=>{
+    const ps=angles.map(a=>pt(a,r*f));
+    return ps.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')+' Z';
+  });
+  const dp=()=>{
+    const ps=cats.map((c,i)=>{const v=Math.min(100,Math.max(0,scores[c.k]||0));return pt(angles[i],r*(v/100));});
+    return ps.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')+' Z';
+  };
+  const total=Math.round(cats.reduce((a,c)=>a+(scores[c.k]||0),0)/n);
+  return(
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      {rp.map((d,i)=><path key={i} d={d} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>)}
+      {angles.map((a,i)=>{const p=pt(a,r);return<line key={i} x1={cx} y1={cy} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>;})}
+      <path d={dp()} fill="rgba(229,62,62,0.18)" stroke="#e53e3e" strokeWidth="2"/>
+      {cats.map((c,i)=>{const v=Math.min(100,Math.max(0,scores[c.k]||0));const pp=pt(angles[i],r*(v/100));return<circle key={i} cx={pp.x.toFixed(1)} cy={pp.y.toFixed(1)} r="4" fill="#e53e3e"/>;})}
+      {cats.map((c,i)=>{const lp=pt(angles[i],r+18);return<text key={i} x={lp.x.toFixed(1)} y={lp.y.toFixed(1)} textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.4)" fontSize="11">{c.l}</text>;})}
+      <text x={cx} y={cy-8} textAnchor="middle" fill="#fff" fontSize="26" fontWeight="800">{total}</text>
+      <text x={cx} y={cy+14} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="10" letterSpacing="2">SCORE</text>
+    </svg>
+  );
+}
+
+/* TOAST */
+function Toast({msg,onDone}){
+  useEffect(()=>{const t=setTimeout(onDone,2800);return()=>clearTimeout(t);},[]);
+  return(
+    <div className="toast">
+      <div style={{fontSize:22}}>{msg.icon||'✨'}</div>
+      <div><div className="toast-t">{msg.title}</div><div className="toast-s">{msg.sub}</div></div>
+    </div>
+  );
+}
+
+/* LINE CHART SIMPLE */
+function LineChart({data,color='#e53e3e'}){
+  if(!data||data.length<2) return null;
+  const w=580,h=80,pad=30;
+  const max=Math.max(...data,1);
+  const xs=data.map((_,i)=>pad+(i/(data.length-1))*(w-2*pad));
+  const ys=data.map(v=>h-pad-(v/max)*(h-2*pad));
+  const line=xs.map((x,i)=>`${i===0?'M':'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const area=line+` L${xs[xs.length-1].toFixed(1)},${h-pad} L${xs[0].toFixed(1)},${h-pad} Z`;
+  return(
+    <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{display:'block'}}>
+      <path d={area} fill={color} opacity="0.08"/>
+      <path d={line} fill="none" stroke={color} strokeWidth="2"/>
+      {xs.map((x,i)=><circle key={i} cx={x.toFixed(1)} cy={ys[i].toFixed(1)} r="3" fill={color}/>)}
+    </svg>
+  );
+}
+
+/* ====================== DASHBOARD ====================== */
+function PageDashboard({state,setState,showToast,setPage,handleNotif}){
+  const {habits,tasks,goals,transactions,scores={},missions,showBanner}=state;
+  const inc=transactions.filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0);
+  const exp=transactions.filter(t=>t.type==='expense').reduce((a,b)=>a+b.amount,0);
+  const hDone=habits.filter(h=>h.doneToday).length;
+  const tDone=tasks.filter(t=>t.status==='done').length;
+  const [mInp,setMInp]=useState('');const [addM,setAddM]=useState(false);
+
+  const toggleM=(id)=>setState(p=>({...p,missions:p.missions.map(m=>m.id===id?{...m,done:!m.done}:m)}));
+  const addMission=()=>{if(!mInp.trim())return;setState(p=>({...p,missions:[...p.missions,{id:Date.now(),name:mInp,done:false,xp:20}]}));setMInp('');setAddM(false);};
+  const delM=(id)=>setState(p=>({...p,missions:p.missions.filter(m=>m.id!==id)}));
+  const totalXP=missions.filter(m=>m.done).reduce((a,b)=>a+b.xp,0);
+  const hour=new Date().getHours();
+  const greet=hour<12?'Buenos días':hour<18?'Buenas tardes':'Buenas noches';
+
+  return(
+    <div>
+      {showBanner&&(
+        <div style={{display:'flex',alignItems:'center',gap:14,background:'rgba(229,62,62,0.08)',border:'1px solid rgba(229,62,62,0.25)',borderRadius:10,padding:'13px 16px',marginBottom:22}}>
+          <span style={{color:'var(--red)',fontSize:20,flexShrink:0}}>🔔</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:600}}>Activá las notificaciones</div>
+            <div style={{fontSize:12,color:'var(--t2)',marginTop:2}}>Recibí alertas de tareas y bloques de tiempo aunque la app esté cerrada.</div>
+          </div>
+          <button className="btn btn-r btn-sm" onClick={handleNotif}>Activar</button>
+          <button onClick={()=>setState(p=>({...p,showBanner:false}))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:16,marginLeft:4}}>✕</button>
+        </div>
+      )}
+
+      <div className="ph">
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <span style={{fontSize:26,fontWeight:800,color:'var(--red)'}}>Dashboard</span>
+            <span style={{fontSize:20,color:'var(--t3)',fontWeight:300}}>| {greet}, {state.user.name}</span>
+          </div>
+          <div style={{fontSize:13,color:'var(--t3)',marginTop:4}}>Cada acción de hoy construye el mañana.</div>
+        </div>
+      </div>
+
+      {/* MISSIONS */}
+      <div className="card2" style={{marginBottom:18}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,fontSize:15,fontWeight:700,color:'var(--red)'}}>◎ Misiones del Día</div>
+          <div style={{fontSize:13,color:'var(--green)',fontWeight:600}}>⚡ +{totalXP} XP</div>
+        </div>
+        {missions.map(m=>(
+          <div key={m.id} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 11px',background:'var(--bg4)',borderRadius:8,marginBottom:6}}>
+            <div onClick={()=>toggleM(m.id)} style={{width:20,height:20,borderRadius:5,border:`2px solid ${m.done?'var(--green)':'var(--bor2)'}`,background:m.done?'var(--green)':'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:11,color:'#fff'}}>{m.done&&'✓'}</div>
+            <span style={{flex:1,fontSize:14,textDecoration:m.done?'line-through':'none',color:m.done?'var(--t3)':'#fff'}}>{m.name}</span>
+            <span style={{fontSize:12,color:'var(--green)',fontWeight:600}}>+{m.xp} XP</span>
+            <button className="del" onClick={()=>delM(m.id)}>✕</button>
+          </div>
+        ))}
+        {addM?(
+          <div style={{display:'flex',gap:8,marginTop:8}}>
+            <input className="inp" placeholder="Nombre de la misión..." value={mInp} onChange={e=>setMInp(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addMission();if(e.key==='Escape')setAddM(false);}} autoFocus style={{flex:1}}/>
+            <button className="btn btn-r btn-sm" onClick={addMission}>Agregar</button>
+            <button className="btn btn-ghost btn-sm" onClick={()=>setAddM(false)}>✕</button>
+          </div>
+        ):(
+          <div onClick={()=>setAddM(true)} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,border:'1px dashed var(--bor2)',borderRadius:8,padding:'11px',color:'var(--t3)',fontSize:13,cursor:'pointer',transition:'all .12s'}} onMouseOver={e=>{e.currentTarget.style.borderColor='var(--red-b)';e.currentTarget.style.color='var(--red)';}} onMouseOut={e=>{e.currentTarget.style.borderColor='var(--bor2)';e.currentTarget.style.color='var(--t3)';}}>
+            <span>+</span><span>+ Agregar Misión</span>
+          </div>
+        )}
+      </div>
+
+      {/* QUICK ACTIONS */}
+      <div className="g3" style={{marginBottom:18}}>
+        {[
+          {ico:'🏃',l:'Añadir hábito',page:'habitos'},
+          {ico:'💳',l:'Registrar gasto',page:'finanzas'},
+          {ico:'💪',l:'Entrenar hoy',page:'entrenamiento'},
+        ].map((a,i)=>(
+          <div key={i} onClick={()=>setPage(a.page)} style={{background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:10,padding:'18px 16px',display:'flex',flexDirection:'column',alignItems:'center',gap:10,cursor:'pointer',transition:'all .12s'}} onMouseOver={e=>e.currentTarget.style.borderColor='var(--bor2)'} onMouseOut={e=>e.currentTarget.style.borderColor='var(--bor)'}>
+            <div style={{width:42,height:42,borderRadius:10,background:'rgba(229,62,62,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>{a.ico}</div>
+            <div style={{fontSize:13,fontWeight:500,color:'var(--t2)'}}>{a.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* STATS 3-col */}
+      <div className="g3" style={{marginBottom:18}}>
+        <div className="card2">
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:1.2,textTransform:'uppercase',color:'var(--red)',marginBottom:12,display:'flex',justifyContent:'space-between'}}>↗ FÍSICO — SUBE HACIENDO EJERCICIO<span style={{color:'var(--t3)'}}>↗</span></div>
+          <div style={{fontSize:30,fontWeight:800}}>{scores.fisico}<span style={{fontSize:16,color:'var(--t3)'}}>/100</span></div>
+          <div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>Completa hábitos para subir tu score</div>
+          <button onClick={()=>setPage('entrenamiento')} className="btn btn-ghost btn-sm" style={{marginTop:12,width:'100%'}}>+ Registra tu peso de hoy</button>
+        </div>
+        <div className="card2">
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:1.2,textTransform:'uppercase',color:'var(--t2)',marginBottom:12,display:'flex',justifyContent:'space-between'}}>⊟ TU DINERO<span style={{color:'var(--t3)',cursor:'pointer'}}>○</span></div>
+          <div style={{fontSize:30,fontWeight:800}}>${(inc-exp).toLocaleString()}.00</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:12}}>
+            <div style={{background:'rgba(72,187,120,0.08)',border:'1px solid rgba(72,187,120,0.15)',borderRadius:8,padding:'8px 10px'}}>
+              <div style={{fontSize:10,color:'var(--green)',fontWeight:600,marginBottom:3}}>↓ Ingresos</div>
+              <div style={{fontSize:15,fontWeight:700,color:'var(--green)'}}>${inc.toLocaleString()}.00</div>
+            </div>
+            <div style={{background:'rgba(229,62,62,0.08)',border:'1px solid rgba(229,62,62,0.2)',borderRadius:8,padding:'8px 10px'}}>
+              <div style={{fontSize:10,color:'var(--red)',fontWeight:600,marginBottom:3}}>↑ Gastos</div>
+              <div style={{fontSize:15,fontWeight:700,color:'var(--red)'}}>${exp.toLocaleString()}.00</div>
+            </div>
+          </div>
+        </div>
+        <div className="card2">
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:1.2,textTransform:'uppercase',color:'var(--t2)',marginBottom:12,display:'flex',justifyContent:'space-between'}}>◎ MENTAL — SUBE COMPLETANDO TAREAS<span style={{color:'var(--t3)'}}>↗</span></div>
+          <div style={{fontSize:30,fontWeight:800}}>{scores.mental}<span style={{fontSize:16,color:'var(--t3)'}}>/100</span></div>
+          <div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>Sube completando tareas y foco</div>
+          <div style={{marginTop:10,fontSize:12,color:'var(--t3)'}}>TAREAS PARA HOY</div>
+          <div style={{fontSize:13,fontWeight:700,marginTop:2}}>{tDone}/{tasks.length} completadas</div>
+        </div>
+      </div>
+
+      {/* POMODORO + HABITOS */}
+      <div className="g2" style={{marginBottom:18}}>
+        <div className="card2">
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:1.2,textTransform:'uppercase',color:'var(--red)',marginBottom:10}}>◎ POMODORO</div>
+          <div style={{fontSize:38,fontWeight:800}}>{state.pomodoro.sessionsToday}</div>
+          <div style={{fontSize:12,color:'var(--t3)',marginTop:3}}>pomodoros hoy</div>
+        </div>
+        <div className="card2">
+          <div style={{fontSize:10,fontWeight:700,letterSpacing:1.2,textTransform:'uppercase',color:'var(--red)',marginBottom:10,display:'flex',justifyContent:'space-between'}}>🔥 HÁBITOS<span style={{color:'var(--t3)'}}>{hDone}/{habits.length}</span></div>
+          <div style={{fontSize:38,fontWeight:800}}>{habits.length>0?Math.round((hDone/habits.length)*100):0}<span style={{fontSize:16,color:'var(--t3)'}}>%</span></div>
+          <div style={{fontSize:12,color:'var(--t3)',marginTop:3}}>completados hoy</div>
+          <div className="pbar" style={{marginTop:10}}>
+            <div className="pfill" style={{width:`${habits.length>0?(hDone/habits.length)*100:0}%`,background:'var(--red)'}}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* METAS */}
+      <div className="card2" style={{marginBottom:18}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div style={{fontSize:15,fontWeight:700,color:'var(--red)'}}>◎ Mis Metas</div>
+          <div onClick={()=>setPage('metas')} style={{fontSize:12,color:'var(--t3)',cursor:'pointer'}}>Ver todas →</div>
+        </div>
+        {goals.map(g=>{
+          const pct=Math.min(100,Math.round(g.target>0?(g.cur/g.target)*100:0));
+          return(
+            <div key={g.id} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 0',borderBottom:'1px solid var(--bor)'}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:g.color,flexShrink:0}}></div>
+              <div style={{flex:1,fontSize:14}}>{g.name}</div>
+              <div style={{fontSize:13,fontWeight:600,color:g.color}}>{pct}%</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* RADAR */}
+      <div className="card2" style={{marginBottom:18}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
+          <div style={{fontSize:14,fontWeight:600,color:'var(--t2)'}}>↗ Radar de Rendimiento</div>
+          <div style={{display:'flex',gap:4}}>
+            {['Día','Sem','Mes'].map((t,i)=>(
+              <button key={t} style={{padding:'4px 11px',borderRadius:5,fontSize:12,cursor:'pointer',border:'none',fontFamily:'Inter',background:i===1?'var(--red)':'transparent',color:i===1?'#fff':'var(--t3)'}}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'240px 1fr',gap:20,alignItems:'center'}}>
+          <Radar scores={state.scores}/>
+          <div className="g2">
+            {[
+              {l:'FÍSICO',k:'fisico',c:'var(--red)',s:'0/4 treinos',ico:'↗'},
+              {l:'PRODUCTIVIDAD',k:'productividad',c:'var(--blue)',s:'0 tarefas · 0 pomodoros',ico:'⚡'},
+              {l:'FINANCIERO',k:'financiero',c:'var(--green)',s:'100% no orçamento',ico:'⊟'},
+              {l:'DISCIPLINA',k:'disciplina',c:'var(--orange)',s:`0% hábitos · ${Math.max(...[...state.habits.map(h=>h.streak),0])}d streak`,ico:'🔥'},
+              {l:'MENTAL',k:'mental',c:'var(--purple)',s:`${goals.filter(g=>g.cur>=g.target).length} metas · ${state.pomodoro.sessionsToday} pomodoros`,ico:'◎'},
+            ].map(s=>(
+              <div key={s.k} style={{background:'var(--bg4)',border:'1px solid var(--bor)',borderRadius:8,padding:'11px 12px',cursor:'pointer'}}>
+                <div style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:s.c,marginBottom:6,display:'flex',justifyContent:'space-between'}}>{s.ico} {s.l}<span style={{color:'var(--t3)',fontSize:12}}>›</span></div>
+                <div style={{fontSize:26,fontWeight:800,color:s.c}}>{state.scores[s.k]||0}</div>
+                <div style={{fontSize:11,color:'var(--t3)',marginTop:3}}>{s.s}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SCORE BOTTOM */}
+      <div className="g2">
+        {[
+          {l:'FÍSICO',k:'fisico',good:false},{l:'PRODUCTIVIDAD',k:'productividad',good:false},
+          {l:'MENTAL',k:'mental',good:false},{l:'FINANCIERO',k:'financiero',good:true},
+          {l:'DISCIPLINA',k:'disciplina',good:false},
+        ].map(s=>(
+          <div key={s.k} style={{background:'var(--bg2)',border:`1px solid ${s.good?'rgba(72,187,120,0.25)':'rgba(229,62,62,0.25)'}`,borderRadius:10,padding:'14px 16px'}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',color:'var(--t3)',marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              {s.l}
+              {s.good?<span style={{fontSize:11,color:'var(--green)',display:'flex',alignItems:'center',gap:3}}>✦ Flow State</span>:<span style={{fontSize:11,color:'var(--red)',display:'flex',alignItems:'center',gap:3}}>⚠ Bajo</span>}
+            </div>
+            <div style={{fontSize:36,fontWeight:800}}>{state.scores[s.k]||0}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ====================== HABITOS ====================== */
+function PageHabitos({state,setState,showToast}){
+  const [showMod,setShowMod]=useState(false);
+  const [form,setForm]=useState({name:'',cat:'aprendizaje',xp:15,icon:'📋'});
+  const CATS=['salud','aprendizaje','trabajo','mente','deportes','finanzas','otros'];
+  const ICONS=['📋','🔥','📗','💪','🧘','🎯','💰','🤝','⭐','🚀','📚','🏃'];
+  const now=new Date();
+  const month=now.getMonth();const year=now.getFullYear();
+  const days=new Date(year,month+1,0).getDate();
+  const dayChartData=Array.from({length:days},(_,i)=>0);// placeholder
+
+  const toggle=(id)=>{
+    setState(p=>{
+      const habits=p.habits.map(h=>{
+        if(h.id!==id) return h;
+        const done=!h.doneToday;
+        return{...h,doneToday:done,streak:done?h.streak+1:Math.max(0,h.streak-1)};
+      });
+      const h=habits.find(h=>h.id===id);
+      let scores={...p.scores};
+      if(h.doneToday){showToast({icon:'🔥',title:`+${h.xp} XP`,sub:h.name});scores.disciplina=(scores.disciplina||0)+1;}
+      return{...p,habits,scores};
+    });
+  };
+  const add=()=>{
+    if(!form.name.trim()) return;
+    setState(p=>({...p,habits:[...p.habits,{id:Date.now(),name:form.name,streak:0,doneToday:false,xp:Number(form.xp),cat:form.cat,icon:form.icon}]}));
+    setForm({name:'',cat:'aprendizaje',xp:15,icon:'📋'});
+    setShowMod(false);
+  };
+  const del=(id)=>setState(p=>({...p,habits:p.habits.filter(h=>h.id!==id)}));
+  const done=state.habits.filter(h=>h.doneToday).length;
+  const tot=state.habits.length;
+  const monthStr=now.toLocaleDateString('es',{month:'long',year:'numeric'});
+  const todayD=now.getDate();
+
+  return(
+    <div>
+      <div className="ph">
+        <div>
+          <div className="st">Hábitos</div>
+          <div className="st-sub">Control de ejecución diaria — hábitos y progreso.</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:24,fontWeight:800,color:'var(--red)'}}>{tot>0?Math.round((done/tot)*100):0}%</div>
+            <div style={{fontSize:11,color:'var(--t3)'}}>Progreso {monthStr.split(' ').slice(-1)[0]}</div>
+          </div>
+          <button className="btn-r-lg" onClick={()=>setShowMod(true)}>+ Agregar</button>
+        </div>
+      </div>
+
+      {/* TODAY BAR */}
+      <div style={{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:10,padding:'13px 16px',marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span style={{fontSize:14,fontWeight:600}}>Hoy: {done}/{tot} hábitos completados</span>
+        <span style={{fontSize:13,color:'var(--t3)'}}>Faltan {tot-done}</span>
+      </div>
+
+      {/* PROGRESS CHART */}
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:600,marginBottom:14}}>Progreso de {monthStr.charAt(0).toUpperCase()+monthStr.slice(1)}</div>
+        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',fontSize:11,color:'var(--t3)',marginBottom:4}}>
+          {['100%','75%','50%','25%','0%'].map(l=><span key={l}>{l}</span>)}
+        </div>
+        <div style={{height:80,position:'relative',borderBottom:'1px solid var(--bor)',marginBottom:8}}>
+          <LineChart data={Array.from({length:todayD},(_,i)=>i<todayD-1?0:0)} color="#e53e3e"/>
+          {/* today marker */}
+          <div style={{position:'absolute',bottom:0,left:`${((todayD-1)/(days-1))*100}%`,transform:'translateX(-50%)'}}>
+            <div style={{width:10,height:10,borderRadius:'50%',background:'var(--red)',border:'2px solid var(--bg)',marginBottom:-5}}></div>
+          </div>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--t3)'}}>
+          {[1,4,7,10,13,16,19,22,25,28,31].map(d=><span key={d}>{d}</span>)}
+        </div>
+      </div>
+
+      {/* GRILLA */}
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:600}}>Grilla de Hábitos</div>
+            <div style={{fontSize:11,color:'var(--t3)',marginTop:2}}>Arrastra ⠿ para reordenar · Clic en ✏ para editar</div>
+          </div>
+          <div style={{fontSize:12,color:'var(--t3)'}}>Semana {todayD-6 < 1 ? 1 : todayD-6}/5 — {todayD}/5</div>
+        </div>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'separate',borderSpacing:'3px'}}>
+            <thead>
+              <tr>
+                <th style={{textAlign:'left',fontSize:12,color:'var(--t3)',fontWeight:500,padding:'4px 8px',width:120}}>Hábito</th>
+                {Array.from({length:Math.min(23,days)},(_,i)=>(
+                  <th key={i} style={{fontSize:10,color:i+1===todayD?'var(--red)':'var(--t3)',fontWeight:500,padding:'4px 3px',textAlign:'center',width:24}}>
+                    <div style={{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:i+1===todayD?'var(--red)':'transparent',color:i+1===todayD?'#fff':'inherit'}}>{i+1}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {state.habits.map(h=>(
+                <tr key={h.id}>
+                  <td style={{padding:'3px 8px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:120}}>
+                      <span style={{fontSize:15}}>{h.icon||'📋'}</span>
+                      <span style={{overflow:'hidden',textOverflow:'ellipsis'}}>{h.name}</span>
+                    </div>
+                  </td>
+                  {Array.from({length:Math.min(23,days)},(_,i)=>(
+                    <td key={i} style={{textAlign:'center',padding:'2px'}}>
+                      <div onClick={()=>i+1===todayD&&toggle(h.id)} style={{width:20,height:20,borderRadius:4,border:`1px solid ${i+1===todayD?'rgba(229,62,62,0.5)':'var(--bor)'}`,background:h.doneToday&&i+1===todayD?'var(--green)':'var(--bg4)',cursor:i+1===todayD?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#fff'}}>{h.doneToday&&i+1===todayD&&'✓'}</div>
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid var(--bor)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <button className="btn btn-r" onClick={()=>setShowMod(true)}>+ Agregar</button>
+          <div style={{display:'flex',gap:8}}>
+            <span style={{fontSize:13,color:'var(--t3)'}}>Hoy: {done} de {tot} completados</span>
+            <span style={{fontSize:13,color:'var(--red)',fontWeight:600}}>{tot>0?Math.round((done/tot)*100):0}%</span>
+          </div>
+        </div>
+      </div>
+
+      {showMod&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMod(false)}>
+          <div className="mod">
+            <div className="mod-t">Nuevo Hábito</div>
+            <div className="fg"><label className="fl">NOMBRE</label><input className="inp" placeholder="ej. Hacer ejercicio" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} onKeyDown={e=>e.key==='Enter'&&add()} autoFocus/></div>
+            <div className="frow">
+              <div className="fg" style={{flex:2}}><label className="fl">CATEGORÍA</label><select className="inp" value={form.cat} onChange={e=>setForm({...form,cat:e.target.value})}>{CATS.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
+              <div className="fg" style={{flex:1}}><label className="fl">XP</label><input className="inp" type="number" min="5" max="100" value={form.xp} onChange={e=>setForm({...form,xp:e.target.value})}/></div>
+            </div>
+            <div className="fg">
+              <label className="fl">ICONO</label>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                {ICONS.map(ic=><div key={ic} onClick={()=>setForm({...form,icon:ic})} style={{width:34,height:34,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'pointer',border:`2px solid ${form.icon===ic?'var(--red)':'var(--bor)'}`,background:form.icon===ic?'var(--red-dim)':'var(--bg4)'}}>{ic}</div>)}
+              </div>
+            </div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <button className="btn btn-ghost" onClick={()=>setShowMod(false)}>Cancelar</button>
+              <button className="btn btn-r" onClick={add}>Crear</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================== TAREAS (KANBAN) ====================== */
+function PageTareas({state,setState}){
+  const [showMod,setShowMod]=useState(false);
+  const [view,setView]=useState('kanban');
+  const [form,setForm]=useState({name:'',priority:'Alta',tags:'',status:'todo'});
+  const COLS=[
+    {id:'todo',l:'Por Hacer',c:'var(--t3)',dot:'○'},
+    {id:'inprogress',l:'En Progreso',c:'var(--red)',dot:'●'},
+    {id:'review',l:'Revisión',c:'var(--orange)',dot:'●'},
+    {id:'done',l:'Completado',c:'var(--green)',dot:'●'},
+  ];
+  const PRIOS=['Alta','Media','Urgente','Baja'];
+  const PCOLS={Alta:'var(--red)',Media:'var(--orange)',Urgente:'var(--red)',Baja:'var(--green)'};
+  const PBGS={Alta:'rgba(229,62,62,0.15)',Media:'rgba(237,137,54,0.15)',Urgente:'rgba(229,62,62,0.15)',Baja:'rgba(72,187,120,0.15)'};
+
+  const add=()=>{
+    if(!form.name.trim()) return;
+    const tags=form.tags.split(',').map(t=>t.trim()).filter(Boolean);
+    setState(p=>({...p,tasks:[...p.tasks,{id:Date.now(),name:form.name,status:'todo',priority:form.priority,tags}]}));
+    setForm({name:'',priority:'Alta',tags:'',status:'todo'});
+    setShowMod(false);
+  };
+  const move=(id,status)=>setState(p=>({...p,tasks:p.tasks.map(t=>t.id===id?{...t,status}:t)}));
+  const del=(id)=>setState(p=>({...p,tasks:p.tasks.filter(t=>t.id!==id)}));
+  const pending=state.tasks.filter(t=>t.status!=='done').length;
+  const pct=state.tasks.length>0?Math.round((state.tasks.filter(t=>t.status==='done').length/state.tasks.length)*100):0;
+
+  return(
+    <div>
+      <div className="ph">
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <span className="st">Tareas</span>
+            <span style={{background:'rgba(229,62,62,0.15)',color:'var(--red)',borderRadius:20,padding:'3px 10px',fontSize:12,fontWeight:600}}>{pending} pendientes</span>
+          </div>
+          <div className="st-sub">{pct}% completadas</div>
+        </div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <button onClick={()=>setView('kanban')} style={{background:view==='kanban'?'var(--bg3)':'transparent',border:'1px solid var(--bor)',borderRadius:6,padding:'6px 10px',cursor:'pointer',color:view==='kanban'?'#fff':'var(--t3)'}}>⊞</button>
+          <button onClick={()=>setView('list')} style={{background:view==='list'?'var(--bg3)':'transparent',border:'1px solid var(--bor)',borderRadius:6,padding:'6px 10px',cursor:'pointer',color:view==='list'?'#fff':'var(--t3)'}}>≡</button>
+          <button className="btn-r-lg" onClick={()=>setShowMod(true)}>+ Nueva Tarea</button>
+        </div>
+      </div>
+
+      {view==='kanban'?(
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14}}>
+          {COLS.map(col=>{
+            const colTasks=state.tasks.filter(t=>t.status===col.id);
+            return(
+              <div key={col.id}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                  <span style={{color:col.c,fontSize:14}}>{col.dot}</span>
+                  <span style={{fontSize:13,fontWeight:600,color:col.id==='todo'?'var(--t2)':'#fff'}}>{col.l}</span>
+                  <span style={{marginLeft:'auto',background:'var(--bg4)',borderRadius:12,padding:'1px 7px',fontSize:11,color:'var(--t3)'}}>{colTasks.length}</span>
+                  {col.id==='todo'&&<button onClick={()=>setShowMod(true)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:16}}>+</button>}
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:8,minHeight:100}}>
+                  {colTasks.length===0?(
+                    <div style={{border:'1px dashed var(--bor)',borderRadius:8,padding:'20px',textAlign:'center',color:'var(--t3)',fontSize:12}}>Vacío</div>
+                  ):colTasks.map(t=>(
+                    <div key={t.id} style={{background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:9,padding:'12px'}}>
+                      <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:8}}>
+                        <div onClick={()=>move(t.id,t.status==='done'?'todo':'done')} style={{width:18,height:18,borderRadius:'50%',border:`2px solid ${t.status==='done'?'var(--green)':'var(--bor2)'}`,flexShrink:0,marginTop:1,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:t.status==='done'?'var(--green)':'transparent'}}>{t.status==='done'&&'✓'}</div>
+                        <span style={{flex:1,fontSize:13,fontWeight:500,color:t.status==='done'?'var(--t3)':'#fff',textDecoration:t.status==='done'?'line-through':'none'}}>{t.name}</span>
+                        <button className="del" onClick={()=>del(t.id)}>✕</button>
+                      </div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                        <span style={{background:PBGS[t.priority]||'var(--bg4)',color:PCOLS[t.priority]||'var(--t2)',borderRadius:12,padding:'2px 8px',fontSize:11,fontWeight:600}}>{t.priority==='Urgente'?'🔥 ':''}{t.priority}</span>
+                        {(t.tags||[]).map(tag=><span key={tag} style={{background:'var(--bg4)',color:'var(--t2)',borderRadius:12,padding:'2px 8px',fontSize:11}}>{tag}</span>)}
+                      </div>
+                      {col.id!=='done'&&(
+                        <select onChange={e=>{if(e.target.value)move(t.id,e.target.value);e.target.value='';}} defaultValue="" style={{marginTop:8,width:'100%',background:'var(--bg4)',border:'1px solid var(--bor)',borderRadius:6,padding:'4px 8px',color:'var(--t3)',fontSize:11,cursor:'pointer'}}>
+                          <option value="">Mover a...</option>
+                          {COLS.filter(c=>c.id!==col.id).map(c=><option key={c.id} value={c.id}>{c.l}</option>)}
+                        </select>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ):(
+        <div>
+          {state.tasks.map(t=>(
+            <div key={t.id} style={{display:'flex',alignItems:'center',gap:10,padding:'11px 14px',background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:9,marginBottom:6}}>
+              <div onClick={()=>move(t.id,t.status==='done'?'todo':'done')} style={{width:18,height:18,borderRadius:'50%',border:`2px solid ${t.status==='done'?'var(--green)':'var(--bor2)'}`,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:t.status==='done'?'var(--green)':'transparent',flexShrink:0}}>{t.status==='done'&&'✓'}</div>
+              <span style={{flex:1,fontSize:13,color:t.status==='done'?'var(--t3)':'#fff',textDecoration:t.status==='done'?'line-through':'none'}}>{t.name}</span>
+              <span style={{background:PBGS[t.priority],color:PCOLS[t.priority],borderRadius:12,padding:'2px 8px',fontSize:11,fontWeight:600}}>{t.priority}</span>
+              {(t.tags||[]).map(tag=><span key={tag} style={{background:'var(--bg4)',color:'var(--t2)',borderRadius:12,padding:'2px 8px',fontSize:11}}>{tag}</span>)}
+              <button className="del" onClick={()=>del(t.id)}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showMod&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMod(false)}>
+          <div className="mod">
+            <div className="mod-t">Nueva Tarea</div>
+            <div className="fg"><label className="fl">TAREA</label><input className="inp" placeholder="¿Qué hay que hacer?" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} autoFocus onKeyDown={e=>e.key==='Enter'&&add()}/></div>
+            <div className="frow">
+              <div className="fg" style={{flex:1}}><label className="fl">PRIORIDAD</label><select className="inp" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}>{PRIOS.map(p=><option key={p} value={p}>{p}</option>)}</select></div>
+              <div className="fg" style={{flex:2}}><label className="fl">TAGS (separados por coma)</label><input className="inp" placeholder="ej. marketing, estrategia" value={form.tags} onChange={e=>setForm({...form,tags:e.target.value})}/></div>
+            </div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <button className="btn btn-ghost" onClick={()=>setShowMod(false)}>Cancelar</button>
+              <button className="btn btn-r" onClick={add}>Crear</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================== METAS ====================== */
+function PageMetas({state,setState,showToast}){
+  const [filter,setFilter]=useState('Todas');
+  const [showMod,setShowMod]=useState(false);
+  const [editId,setEditId]=useState(null);
+  const [editVal,setEditVal]=useState('');
+  const [form,setForm]=useState({name:'',cur:0,target:100,unit:'%',cat:'Finanzas',icon:'💰',color:'#48bb78'});
+  const CATS=['Finanzas','Carrera','Salud','Personal','Educación','Otros'];
+  const ICONS=['💰','🚀','💪','⭐','📚','🏠','✈','🎯','🔥','💎'];
+  const COLORS=['#48bb78','#ed8936','#4299e1','#9f7aea','#e53e3e','#f6e05e','#fc8181','#63b3ed'];
+  const CAT_COLORS={'Finanzas':'#48bb78','Carrera':'#ed8936','Salud':'#e53e3e','Personal':'#f6e05e','Educación':'#4299e1','Otros':'#a0a0a0'};
+
+  const filtered=state.goals.filter(g=>{
+    if(filter==='Todas') return true;
+    if(filter==='Activas') return g.cur<g.target;
+    if(filter==='Completadas') return g.cur>=g.target;
+    if(filter==='Atrasadas') return false;
+    return true;
+  });
+
+  const add=()=>{
+    if(!form.name.trim()) return;
+    setState(p=>({...p,goals:[...p.goals,{id:Date.now(),name:form.name,cur:Number(form.cur),target:Number(form.target),unit:form.unit,cat:form.cat,icon:form.icon,color:form.color}]}));
+    setForm({name:'',cur:0,target:100,unit:'%',cat:'Finanzas',icon:'💰',color:'#48bb78'});
+    setShowMod(false);
+  };
+  const update=(id)=>{
+    const val=parseFloat(editVal);
+    setState(p=>({...p,goals:p.goals.map(g=>{
+      if(g.id!==id) return g;
+      const ng={...g,cur:Math.min(g.target,Math.max(0,val))};
+      if(ng.cur>=ng.target) showToast({icon:'🏆',title:'¡META CUMPLIDA!',sub:ng.name});
+      return ng;
+    })}));
+    setEditId(null);
+  };
+  const del=(id)=>setState(p=>({...p,goals:p.goals.filter(g=>g.id!==id)}));
+
+  return(
+    <div>
+      <div className="ph">
+        <div>
+          <div className="st">Metas</div>
+          <div className="st-sub">{state.goals.filter(g=>g.cur<g.target).length} activas · {state.goals.filter(g=>g.cur>=g.target).length} completadas</div>
+        </div>
+        <button className="btn-r-lg" onClick={()=>setShowMod(true)}>+ Nueva Meta</button>
+      </div>
+
+      <div style={{display:'flex',gap:8,marginBottom:20}}>
+        {['Todas','Activas','Completadas','Atrasadas'].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)} style={{padding:'7px 16px',borderRadius:20,border:`1px solid ${filter===f?'var(--red)':'var(--bor)'}`,background:filter===f?'var(--red)':'transparent',color:filter===f?'#fff':'var(--t2)',cursor:'pointer',fontSize:13,fontWeight:500,fontFamily:'Inter'}}>{f}</button>
+        ))}
+      </div>
+
+      <div className="g3">
+        {filtered.map(g=>{
+          const pct=Math.min(100,g.target>0?Math.round((g.cur/g.target)*100):0);
+          const bgMap={'Finanzas':'rgba(72,187,120,0.08)','Carrera':'rgba(237,137,54,0.08)','Salud':'rgba(229,62,62,0.08)','Personal':'rgba(246,224,94,0.08)','Educación':'rgba(66,153,225,0.08)','Otros':'rgba(160,160,160,0.08)'};
+          return(
+            <div key={g.id} style={{background:bgMap[g.cat]||'var(--bg3)',border:`1px solid ${g.color}22`,borderRadius:12,padding:'16px',position:'relative',overflow:'hidden'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                <div style={{width:40,height:40,borderRadius:'50%',background:`${g.color}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>{g.icon}</div>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span style={{background:'rgba(255,255,255,0.08)',borderRadius:12,padding:'3px 10px',fontSize:11,fontWeight:600,color:'var(--t2)'}}>En progreso</span>
+                  <button className="del" onClick={()=>del(g.id)}>✕</button>
+                </div>
+              </div>
+              <div style={{marginTop:10,marginBottom:6}}>
+                <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{g.name}</div>
+                <span style={{background:`${CAT_COLORS[g.cat]||'#888'}22`,color:CAT_COLORS[g.cat]||'#888',borderRadius:12,padding:'2px 9px',fontSize:11,fontWeight:600}}>{g.icon} {g.cat}</span>
+              </div>
+              <div style={{marginTop:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--t3)',marginBottom:4,textTransform:'uppercase',letterSpacing:0.8,fontWeight:600}}>
+                  <span>PROGRESO</span>
+                  <span style={{color:g.color,fontWeight:700}}>{pct}%</span>
+                </div>
+                <div className="pbar"><div className="pfill" style={{width:`${pct}%`,background:g.color}}></div></div>
+                <div style={{fontSize:12,color:'var(--t3)',marginTop:5}}>{g.cur.toLocaleString()} {g.unit} / {g.target.toLocaleString()} {g.unit}</div>
+              </div>
+              {editId===g.id?(
+                <div style={{display:'flex',gap:6,marginTop:10}}>
+                  <input className="inp" type="number" value={editVal} onChange={e=>setEditVal(e.target.value)} style={{flex:1,padding:'6px 10px'}}/>
+                  <button className="btn btn-r btn-sm" onClick={()=>update(g.id)}>OK</button>
+                  <button className="btn btn-ghost btn-sm" onClick={()=>setEditId(null)}>✕</button>
+                </div>
+              ):(
+                <button onClick={()=>{setEditId(g.id);setEditVal(g.cur);}} style={{marginTop:12,width:'100%',background:'transparent',border:`1px solid ${g.color}55`,color:g.color,borderRadius:8,padding:'8px',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'Inter'}}>Actualizar Progreso</button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {showMod&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMod(false)}>
+          <div className="mod">
+            <div className="mod-t">Nueva Meta</div>
+            <div className="fg"><label className="fl">NOMBRE</label><input className="inp" placeholder="ej. Ingreso mensual $5000" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} autoFocus/></div>
+            <div className="frow">
+              <div className="fg" style={{flex:1}}><label className="fl">ACTUAL</label><input className="inp" type="number" value={form.cur} onChange={e=>setForm({...form,cur:e.target.value})}/></div>
+              <div className="fg" style={{flex:1}}><label className="fl">OBJETIVO</label><input className="inp" type="number" value={form.target} onChange={e=>setForm({...form,target:e.target.value})}/></div>
+              <div className="fg" style={{flex:1}}><label className="fl">UNIDAD</label><input className="inp" placeholder="%, $, km..." value={form.unit} onChange={e=>setForm({...form,unit:e.target.value})}/></div>
+            </div>
+            <div className="frow">
+              <div className="fg" style={{flex:1}}><label className="fl">CATEGORÍA</label><select className="inp" value={form.cat} onChange={e=>setForm({...form,cat:e.target.value})}>{CATS.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
+            </div>
+            <div className="fg"><label className="fl">ICONO</label><div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{ICONS.map(ic=><div key={ic} onClick={()=>setForm({...form,icon:ic})} style={{width:34,height:34,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'pointer',border:`2px solid ${form.icon===ic?'var(--red)':'var(--bor)'}`,background:'var(--bg4)'}}>{ic}</div>)}</div></div>
+            <div className="fg"><label className="fl">COLOR</label><div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{COLORS.map(c=><div key={c} onClick={()=>setForm({...form,color:c})} style={{width:28,height:28,borderRadius:'50%',background:c,cursor:'pointer',border:form.color===c?'3px solid #fff':'3px solid transparent'}}></div>)}</div></div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <button className="btn btn-ghost" onClick={()=>setShowMod(false)}>Cancelar</button>
+              <button className="btn btn-r" onClick={add}>Crear</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* SAVINGS GOAL ITEM - separate component to avoid hook-in-map violation */
+function SavingsGoalItem({g,pct,state,setState}){
+  const [editOpen,setEditOpen]=useState(false);
+  const [val,setVal]=useState(g.cur);
+  const save=()=>{
+    const n=parseFloat(val)||0;
+    setState(p=>({...p,savingsGoals:p.savingsGoals.map(sg=>sg.id===g.id?{...sg,cur:Math.min(sg.target,Math.max(0,n))}:sg)}));
+    setEditOpen(false);
+  };
+  return(
+    <div style={{border:`1px solid ${g.color}33`,borderLeft:`3px solid ${g.color}`,borderRadius:8,padding:'12px 14px',marginBottom:8}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+        <span style={{fontSize:14,fontWeight:600}}>{g.name}</span>
+        <span style={{fontSize:14,fontWeight:700,color:pct>=100?'var(--green)':'var(--red)'}}>{pct}%</span>
+      </div>
+      <div style={{fontSize:12,color:'var(--t3)',marginBottom:4}}>
+        <span style={{fontWeight:700,color:'#fff'}}>${g.cur.toLocaleString('en',{minimumFractionDigits:2})}</span>
+        <span> / ${g.target.toLocaleString('en',{minimumFractionDigits:2})}</span>
+      </div>
+      <div style={{fontSize:11,color:'var(--t3)',marginBottom:8}}>Faltan ${(g.target-g.cur).toLocaleString('en',{minimumFractionDigits:2})}</div>
+      <div className="pbar"><div className="pfill" style={{width:`${pct}%`,background:g.color}}></div></div>
+      {editOpen?(
+        <div style={{display:'flex',gap:6,marginTop:10}}>
+          <input className="inp" type="number" value={val} onChange={e=>setVal(e.target.value)} style={{flex:1,padding:'5px 10px'}}/>
+          <button onClick={save} style={{background:'var(--red)',border:'none',color:'#fff',borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Inter'}}>OK</button>
+          <button onClick={()=>setEditOpen(false)} style={{background:'transparent',border:'1px solid var(--bor2)',color:'var(--t2)',borderRadius:6,padding:'5px 10px',fontSize:12,cursor:'pointer',fontFamily:'Inter'}}>✕</button>
+        </div>
+      ):(
+        <button onClick={()=>{setVal(g.cur);setEditOpen(true);}} style={{marginTop:10,background:'transparent',border:`1px solid ${g.color}55`,color:g.color,borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'Inter'}}>+ Actualizar</button>
+      )}
+    </div>
+  );
+}
+
+/* ====================== FINANZAS ====================== */
+function PageFinanzas({state,setState,showToast}){
+  const [tab,setTab]=useState('Resumen');
+  const [txFilter,setTxFilter]=useState('Todos');
+  const [showMod,setShowMod]=useState(false);
+  const [form,setForm]=useState({name:'',amount:'',type:'expense',cat:'otros'});
+  const [curMonth,setCurMonth]=useState(new Date().getMonth());
+  const [curYear,setCurYear]=useState(new Date().getFullYear());
+  const CATS=['trabajo','vivienda','comida','transporte','entretenimiento','salud','ahorro','otros'];
+  const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  const txMonth=state.transactions.filter(t=>{
+    const d=new Date(t.date);
+    return d.getMonth()===curMonth&&d.getFullYear()===curYear;
+  });
+  const inc=txMonth.filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0);
+  const exp=txMonth.filter(t=>t.type==='expense').reduce((a,b)=>a+b.amount,0);
+  const bal=inc-exp;
+
+  const add=()=>{
+    if(!form.name.trim()||!form.amount) return;
+    setState(p=>({...p,transactions:[...p.transactions,{id:Date.now(),name:form.name,amount:parseFloat(form.amount),type:form.type,cat:form.cat,date:new Date().toISOString().slice(0,10)}]}));
+    setForm({name:'',amount:'',type:'expense',cat:'otros'});
+    setShowMod(false);
+  };
+  const del=(id)=>setState(p=>({...p,transactions:p.transactions.filter(t=>t.id!==id)}));
+
+  const filteredTx=txMonth.filter(t=>txFilter==='Todos'||(txFilter==='Gastos'&&t.type==='expense')||(txFilter==='Ingresos'&&t.type==='income'));
+  const catExp={};txMonth.filter(t=>t.type==='expense').forEach(t=>{catExp[t.cat]=(catExp[t.cat]||0)+t.amount;});
+
+  const totalSavings=state.savingsGoals.reduce((a,g)=>a+g.cur,0);
+  const totalTarget=state.savingsGoals.reduce((a,g)=>a+g.target,0);
+  const savPct=totalTarget>0?Math.round((totalSavings/totalTarget)*100):0;
+
+  return(
+    <div>
+      <div className="ph">
+        <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <button onClick={()=>{let m=curMonth-1;let y=curYear;if(m<0){m=11;y--;}setCurMonth(m);setCurYear(y);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t2)',fontSize:18}}>‹</button>
+          <span style={{fontSize:16,fontWeight:700}}>{MONTHS[curMonth]} {curYear}</span>
+          <button onClick={()=>{let m=curMonth+1;let y=curYear;if(m>11){m=0;y++;}setCurMonth(m);setCurYear(y);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t2)',fontSize:18}}>›</button>
+          <div style={{marginLeft:'auto',background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:8,padding:'6px 12px',fontSize:13,color:'var(--t2)'}}>$ USD ▾</div>
+        </div>
+      </div>
+
+      {/* BALANCE CARD */}
+      <div className="card2" style={{marginBottom:16}}>
+        <div style={{fontSize:12,color:'var(--t3)',marginBottom:8}}>Saldo del mes</div>
+        <div style={{fontSize:44,fontWeight:800,marginBottom:14}}>${bal.toLocaleString('en',{minimumFractionDigits:2})}</div>
+        <div className="g2" style={{gap:10,marginBottom:12}}>
+          <div style={{background:'rgba(72,187,120,0.08)',border:'1px solid rgba(72,187,120,0.2)',borderRadius:8,padding:'12px 14px'}}>
+            <div style={{fontSize:11,color:'var(--green)',fontWeight:600,marginBottom:4}}>↓ Ingresos</div>
+            <div style={{fontSize:22,fontWeight:700,color:'var(--green)'}}>${inc.toLocaleString('en',{minimumFractionDigits:2})}</div>
+          </div>
+          <div style={{background:'rgba(229,62,62,0.08)',border:'1px solid rgba(229,62,62,0.2)',borderRadius:8,padding:'12px 14px'}}>
+            <div style={{fontSize:11,color:'var(--red)',fontWeight:600,marginBottom:4}}>↑ Gastos</div>
+            <div style={{fontSize:22,fontWeight:700,color:'var(--red)'}}>${exp.toLocaleString('en',{minimumFractionDigits:2})}</div>
+          </div>
+        </div>
+        <div style={{border:'1px dashed var(--bor)',borderRadius:8,padding:'10px',textAlign:'center',fontSize:13,color:'var(--t3)',cursor:'pointer'}}>○ Definir limite de gastos mensual</div>
+      </div>
+
+      {/* TABS */}
+      <div className="tab-line">
+        {['Resumen','Suscripciones','Boletos','Tarjetas'].map(t=>(
+          <button key={t} className={`tabl ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t}</button>
+        ))}
+      </div>
+
+      {tab==='Resumen'&&(
+        <>
+          {/* SAVINGS GOALS */}
+          <div className="card2" style={{marginBottom:16}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:18}}>🎯</span>
+                <span style={{fontSize:14,fontWeight:700}}>Metas de Ahorro</span>
+                <span style={{background:'var(--bg4)',borderRadius:12,padding:'1px 7px',fontSize:11,color:'var(--t3)'}}>{state.savingsGoals.length}</span>
+              </div>
+              <div style={{fontSize:12,color:'var(--red)',cursor:'pointer'}}>Ver todas →</div>
+            </div>
+            <div style={{background:'var(--bg4)',borderRadius:8,padding:'12px 14px',marginBottom:10}}>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:6}}>TOTAL AHORRADO</div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div>
+                  <span style={{fontSize:20,fontWeight:800}}>${totalSavings.toLocaleString('en',{minimumFractionDigits:2})}</span>
+                  <span style={{fontSize:13,color:'var(--t3)',marginLeft:6}}>/ ${totalTarget.toLocaleString('en',{minimumFractionDigits:2})}</span>
+                </div>
+                <div style={{fontSize:18,fontWeight:800,color:'var(--red)'}}>{savPct}%<div style={{fontSize:10,color:'var(--t3)',fontWeight:400,textAlign:'right'}}>del total</div></div>
+              </div>
+            </div>
+            {state.savingsGoals.map(g=>{
+              const pct=g.target>0?Math.round((g.cur/g.target)*100):0;
+              return(
+                <SavingsGoalItem key={g.id} g={g} pct={pct} state={state} setState={setState}/>
+              );
+            })}
+          </div>
+
+          {/* TRANSACTIONS */}
+          <div className="card2">
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
+              <div style={{fontSize:14,fontWeight:700}}>Transacciones <span style={{color:'var(--t3)',fontSize:13}}>({filteredTx.length})</span></div>
+              <div style={{display:'flex',gap:4}}>
+                {['Todos','Gastos','Ingresos'].map(f=><button key={f} onClick={()=>setTxFilter(f)} style={{padding:'4px 10px',borderRadius:6,border:'1px solid var(--bor)',background:txFilter===f?'var(--bg4)':'transparent',color:txFilter===f?'#fff':'var(--t3)',cursor:'pointer',fontSize:12,fontFamily:'Inter'}}>{f}</button>)}
+              </div>
+            </div>
+            {filteredTx.length===0?(
+              <div className="empty">
+                <div className="ei">📋</div>
+                <div style={{fontSize:15,fontWeight:600,color:'var(--t2)',marginBottom:8}}>Sin movimientos este mes</div>
+                <button className="btn btn-r btn-sm" onClick={()=>setShowMod(true)}>+ Registrar el primero</button>
+              </div>
+            ):filteredTx.slice().reverse().map(t=>(
+              <div key={t.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 11px',background:'var(--bg4)',border:'1px solid var(--bor)',borderRadius:8,marginBottom:6}}>
+                <div style={{width:34,height:34,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,background:t.type==='income'?'rgba(72,187,120,0.1)':'rgba(229,62,62,0.1)'}}>{t.type==='income'?'💵':'💸'}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:500}}>{t.name}</div>
+                  <div style={{fontSize:11,color:'var(--t3)',marginTop:1}}>{t.cat} · {t.date}</div>
+                </div>
+                <div style={{fontSize:14,fontWeight:700,color:t.type==='income'?'var(--green)':'var(--red)'}}>{t.type==='income'?'+':'-'}${t.amount.toLocaleString()}</div>
+                <button className="del" onClick={()=>del(t.id)}>✕</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {tab==='Suscripciones'&&(
+        <div>
+          <div className="card2" style={{marginBottom:14}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+              <div>
+                <div style={{fontSize:12,color:'var(--t3)',marginBottom:4}}>Total mensual en suscripciones</div>
+                <div style={{fontSize:32,fontWeight:800}}>${(state.subscriptions||[]).reduce((a,b)=>a+b.amount,0).toFixed(2)}</div>
+              </div>
+              <button className="btn btn-r" onClick={()=>setState(p=>({...p,showSubMod:true}))}>+ Agregar</button>
+            </div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:12,color:'var(--t3)',marginBottom:8}}>Agregar rápido</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                {['Netflix','Spotify','Disney+','YouTube','Amazon Prime','HBO Max','Apple TV+','Paramount+','Deezer','Apple Music'].map(s=>{
+                  const addSub=()=>setState(p=>({...p,subscriptions:[...(p.subscriptions||[]),{id:Date.now(),name:s,amount:14.99,billing:'mensual'}]}));
+                  return(
+                    <button key={s} onClick={addSub} style={{background:'var(--bg4)',border:'1px solid var(--bor)',borderRadius:20,padding:'5px 12px',fontSize:12,color:'var(--t2)',cursor:'pointer',fontFamily:'Inter',display:'flex',alignItems:'center',gap:5}}>
+                      <span>○</span>{s}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          {(state.subscriptions||[]).length===0?(
+            <div className="empty"><div className="ei">📺</div>Sin suscripciones registradas</div>
+          ):(state.subscriptions||[]).map(s=>(
+            <div key={s.id} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:8,marginBottom:6}}>
+              <div style={{width:34,height:34,borderRadius:8,background:'rgba(99,179,237,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>📺</div>
+              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{s.name}</div><div style={{fontSize:11,color:'var(--t3)'}}>{s.billing||'mensual'}</div></div>
+              <div style={{fontSize:14,fontWeight:700,color:'var(--red)'}}>${s.amount.toFixed(2)}</div>
+              <button className="del" onClick={()=>setState(p=>({...p,subscriptions:(p.subscriptions||[]).filter(x=>x.id!==s.id)}))}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {tab==='Boletos'&&(
+        <div>
+          <div className="card2" style={{marginBottom:14}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div>
+                <div style={{fontSize:12,color:'var(--t3)',marginBottom:4}}>Total pendiente</div>
+                <div style={{fontSize:32,fontWeight:800,color:'var(--red)'}}>${(state.boletos||[]).filter(b=>!b.paid).reduce((a,b)=>a+b.amount,0).toFixed(2)}</div>
+                <div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>{(state.boletos||[]).filter(b=>!b.paid).length} boletos por pagar</div>
+              </div>
+              <button className="btn btn-r" onClick={()=>{const name=prompt('Nombre del boleto:');const amount=parseFloat(prompt('Monto:'));if(name&&amount)setState(p=>({...p,boletos:[...(p.boletos||[]),{id:Date.now(),name,amount,due:'',paid:false}]}));}}>+ Agregar</button>
+            </div>
+          </div>
+          {(state.boletos||[]).length===0?(
+            <div className="empty">
+              <div style={{fontSize:40,marginBottom:12}}>✓</div>
+              <div style={{fontSize:15,fontWeight:600,color:'var(--t2)',marginBottom:8}}>Sin boletos pendientes</div>
+              <button className="btn btn-r btn-sm" onClick={()=>{const name=prompt('Nombre:');const amount=parseFloat(prompt('Monto:'));if(name&&amount)setState(p=>({...p,boletos:[...(p.boletos||[]),{id:Date.now(),name,amount,due:'',paid:false}]}))}}>+ Agregar boleto</button>
+            </div>
+          ):(state.boletos||[]).map(b=>(
+            <div key={b.id} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:8,marginBottom:6,opacity:b.paid?0.5:1}}>
+              <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500,textDecoration:b.paid?'line-through':'none'}}>{b.name}</div></div>
+              <div style={{fontSize:14,fontWeight:700,color:b.paid?'var(--green)':'var(--red)'}}>${b.amount.toFixed(2)}</div>
+              <button onClick={()=>setState(p=>({...p,boletos:(p.boletos||[]).map(x=>x.id===b.id?{...x,paid:!x.paid}:x)}))} style={{background:b.paid?'var(--green)':'transparent',border:`1px solid ${b.paid?'var(--green)':'var(--bor2)'}`,borderRadius:6,padding:'4px 10px',fontSize:12,color:b.paid?'#fff':'var(--t2)',cursor:'pointer',fontFamily:'Inter'}}>{b.paid?'Pago':'Pagar'}</button>
+              <button className="del" onClick={()=>setState(p=>({...p,boletos:(p.boletos||[]).filter(x=>x.id!==b.id)}))}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {tab==='Tarjetas'&&(
+        <div>
+          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:14}}>
+            <button className="btn btn-r" onClick={()=>{const name=prompt('Nombre de la tarjeta:');const last4=prompt('Últimos 4 dígitos:');if(name&&last4)setState(p=>({...p,tarjetas:[...(p.tarjetas||[]),{id:Date.now(),name,last4,type:'credit',limit:0,balance:0}]}))}}>⊟ Nueva tarjeta</button>
+          </div>
+          {(state.tarjetas||[]).length===0?(
+            <div className="empty">
+              <div style={{fontSize:40,marginBottom:12}}>⊟</div>
+              <div style={{fontSize:15,fontWeight:600,color:'var(--t2)',marginBottom:8}}>Sin tarjetas registradas</div>
+              <button className="btn btn-r btn-sm" onClick={()=>{const name=prompt('Nombre:');const last4=prompt('Últimos 4 dígitos:');if(name&&last4)setState(p=>({...p,tarjetas:[...(p.tarjetas||[]),{id:Date.now(),name,last4,type:'credit',limit:0,balance:0}]}))}}>+ Agregar tarjeta</button>
+            </div>
+          ):(state.tarjetas||[]).map(t=>(
+            <div key={t.id} style={{background:'linear-gradient(135deg,var(--bg3),var(--bg4))',border:'1px solid var(--bor2)',borderRadius:12,padding:'20px',marginBottom:10,position:'relative'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
+                <div style={{fontSize:14,fontWeight:700}}>{t.name}</div>
+                <div style={{fontSize:22}}>⊟</div>
+              </div>
+              <div style={{fontSize:16,letterSpacing:4,color:'var(--t2)',marginBottom:12}}>•••• •••• •••• {t.last4}</div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:11,color:'var(--t3)',textTransform:'uppercase',letterSpacing:1}}>{t.type==='credit'?'Crédito':'Débito'}</span>
+                <button className="del" onClick={()=>setState(p=>({...p,tarjetas:(p.tarjetas||[]).filter(x=>x.id!==t.id)}))}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <button className="fab" onClick={()=>setShowMod(true)}>+ Registrar</button>
+
+      {showMod&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMod(false)}>
+          <div className="mod">
+            <div className="mod-t">Nueva Transacción</div>
+            <div className="fg"><label className="fl">DESCRIPCIÓN</label><input className="inp" placeholder="ej. Salario, Supermercado..." value={form.name} onChange={e=>setForm({...form,name:e.target.value})} autoFocus/></div>
+            <div className="frow">
+              <div className="fg" style={{flex:1}}><label className="fl">MONTO $</label><input className="inp" type="number" min="0" placeholder="0" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})}/></div>
+              <div className="fg" style={{flex:1}}><label className="fl">TIPO</label><select className="inp" value={form.type} onChange={e=>setForm({...form,type:e.target.value})}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></div>
+            </div>
+            <div className="fg"><label className="fl">CATEGORÍA</label><select className="inp" value={form.cat} onChange={e=>setForm({...form,cat:e.target.value})}>{CATS.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <button className="btn btn-ghost" onClick={()=>setShowMod(false)}>Cancelar</button>
+              <button className="btn btn-r" onClick={add}>Agregar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================== ENTRENAMIENTO ====================== */
+function PageEntrenamiento({state,setState}){
+  const [tab,setTab]=useState('Dashboard');
+  const now=new Date();
+  const weekDays=['Sáb','Dom','Lun','Mar','Mié','Jue','Vie'];
+  const today=now.getDay();
+  const weekDates=weekDays.map((_,i)=>{
+    const d=new Date(now);d.setDate(now.getDate()-(today===0?6:today-1)-(6-i)+(i));
+    return d.getDate();
+  });
+  // Recompute correct week
+  const mon=new Date(now);mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));
+  const wDates=Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i-1);return{day:['Sáb','Dom','Lun','Mar','Mié','Jue','Vie'][i],date:d.getDate()};});
+  // correct: Mon-Sun
+  const wk=Array.from({length:7},(_,i)=>{
+    const d=new Date(now);
+    const diff=i-(now.getDay()===0?6:now.getDay()-1);
+    d.setDate(now.getDate()+diff);
+    return{day:['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'][i],date:d.getDate(),isToday:d.toDateString()===now.toDateString()};
+  });
+
+  /* BODY SVG */
+  const BodySVG=({side})=>(
+    <svg width="120" height="200" viewBox="0 0 120 200">
+      <g fill="#2a2a2a" stroke="#3a3a3a" strokeWidth="1">
+        {/* head */}<circle cx="60" cy="20" r="14" fill="#2a2a2a"/>
+        {/* neck */}<rect x="54" y="33" width="12" height="8" rx="3"/>
+        {/* torso */}<rect x="38" y="40" width="44" height="55" rx="6"/>
+        {/* shoulders */}<ellipse cx="30" cy="50" rx="12" ry="8"/><ellipse cx="90" cy="50" rx="12" ry="8"/>
+        {/* upper arms */}<rect x="18" y="48" width="14" height="35" rx="6"/><rect x="88" y="48" width="14" height="35" rx="6"/>
+        {/* forearms */}<rect x="20" y="82" width="12" height="28" rx="5"/><rect x="88" y="82" width="12" height="28" rx="5"/>
+        {/* hands */}<ellipse cx="26" cy="115" rx="8" ry="6"/><ellipse cx="94" cy="115" rx="8" ry="6"/>
+        {/* pelvis */}<rect x="40" y="93" width="40" height="18" rx="5"/>
+        {/* upper legs */}<rect x="40" y="108" width="17" height="40" rx="6"/><rect x="63" y="108" width="17" height="40" rx="6"/>
+        {/* lower legs */}<rect x="41" y="146" width="15" height="35" rx="5"/><rect x="64" y="146" width="15" height="35" rx="5"/>
+        {/* feet */}<ellipse cx="49" cy="185" rx="12" ry="5"/><ellipse cx="71" cy="185" rx="12" ry="5"/>
+      </g>
+    </svg>
+  );
+
+  return(
+    <div>
+      <div className="ph">
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontSize:20}}>💪</span>
+            <span style={{fontSize:22,fontWeight:800,color:'var(--red)'}}>Pilar Físico</span>
+          </div>
+          <div style={{fontSize:13,color:'var(--t3)',marginTop:3}}>Entrenamiento y rendimiento</div>
+        </div>
+      </div>
+
+      <div style={{display:'flex',gap:0,background:'var(--bg3)',borderRadius:10,padding:3,marginBottom:20}}>
+        {['Dashboard','Rutinas','Estadísticas'].map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:'9px 16px',border:'none',borderRadius:8,background:tab===t?'var(--red)':'transparent',color:tab===t?'#fff':'var(--t3)',cursor:'pointer',fontSize:14,fontWeight:600,fontFamily:'Inter',transition:'all .12s'}}>{t}</button>
+        ))}
+      </div>
+
+      {tab==='Dashboard'&&(
+        <>
+          <div className="g3" style={{marginBottom:18}}>
+            <div className="card2">
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}>SCORE FÍSICO</div>
+              <div style={{display:'flex',alignItems:'center',gap:14}}>
+                <div>
+                  <div style={{fontSize:28,fontWeight:800}}>{state.scores.fisico}/100</div>
+                  <div style={{fontSize:12,color:'var(--t3)',marginTop:3}}>0 entrenamientos esta semana</div>
+                </div>
+                <div style={{width:50,height:50,borderRadius:'50%',border:'3px solid var(--bor)',display:'flex',alignItems:'center',justifyContent:'center',marginLeft:'auto'}}>
+                  <svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="rgba(229,62,62,0.1)" strokeWidth="4"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--red)" strokeWidth="4" strokeDasharray="113" strokeDashoffset={113-(113*state.scores.fisico/100)} transform="rotate(-90 22 22)"/></svg>
+                </div>
+              </div>
+            </div>
+            <div className="card2">
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}>PESO ACTUAL</div>
+              <div style={{fontSize:28,fontWeight:800,color:'var(--t3)'}}>—</div>
+              <button className="btn btn-ghost btn-sm" style={{marginTop:8}}>+ Registrar peso de hoy</button>
+            </div>
+            <div className="card2">
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}>↗ VOLUMEN TOTAL</div>
+              <div style={{fontSize:28,fontWeight:800,color:'var(--red)'}}>0 KG</div>
+              <div style={{fontSize:12,color:'var(--t3)',marginTop:3}}>Últimos 7 días</div>
+            </div>
+          </div>
+
+          {/* WEEK */}
+          <div className="card2" style={{marginBottom:18}}>
+            <div style={{fontSize:11,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:14}}>SEMANA</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:8}}>
+              {wk.map((d,i)=>(
+                <div key={i} style={{textAlign:'center'}}>
+                  <div style={{fontSize:11,color:'var(--t3)',marginBottom:6}}>{d.day}</div>
+                  <div style={{width:40,height:40,borderRadius:8,background:d.isToday?'var(--red)':'var(--bg4)',border:`1px solid ${d.isToday?'var(--red)':'var(--bor)'}`,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:14,fontWeight:d.isToday?700:400}}>{d.date}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* MUSCLE MAP */}
+          <div className="card2">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+              <div style={{fontSize:15,fontWeight:700,color:'var(--red)'}}>Mapa Muscular</div>
+              <div style={{fontSize:12,color:'var(--t3)'}}>Últimos 7 días</div>
+            </div>
+            <div style={{textAlign:'center',marginBottom:10}}>
+              <div style={{fontSize:11,color:'var(--t3)',letterSpacing:1,textTransform:'uppercase',marginBottom:4}}>VOLUMEN TOTAL · 7 DÍAS</div>
+              <div style={{fontSize:32,fontWeight:800,color:'var(--red)'}}>0 KG</div>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24,maxWidth:320,margin:'0 auto'}}>
+              <div style={{textAlign:'center'}}>
+                <div style={{fontSize:11,color:'var(--t3)',marginBottom:8,letterSpacing:1}}>ANTERIOR</div>
+                <BodySVG side="front"/>
+              </div>
+              <div style={{textAlign:'center'}}>
+                <div style={{fontSize:11,color:'var(--t3)',marginBottom:8,letterSpacing:1}}>POSTERIOR</div>
+                <BodySVG side="back"/>
+              </div>
+            </div>
+            <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:14,fontSize:11,color:'var(--t3)'}}>
+              {[{l:'INACTIVO',c:'#2a2a2a'},{l:'LEVE',c:'rgba(229,62,62,0.5)'},{l:'INTENSO',c:'var(--red)'}].map(s=>(
+                <div key={s.l} style={{display:'flex',alignItems:'center',gap:5}}>
+                  <div style={{width:10,height:10,borderRadius:2,background:s.c,border:'1px solid var(--bor)'}}></div>
+                  {s.l}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+      {tab==='Rutinas'&&<div className="empty"><div className="ei">🏋</div>Crea tu primera rutina</div>}
+      {tab==='Estadísticas'&&<div className="empty"><div className="ei">📊</div>Completa entrenamientos para ver estadísticas</div>}
+    </div>
+  );
+}
+
+/* ====================== CALENDARIO ====================== */
+function PageCalendario({state,setState}){
+  const [curM,setCurM]=useState(new Date().getMonth());
+  const [curY,setCurY]=useState(new Date().getFullYear());
+  const [selDay,setSelDay]=useState(new Date().getDate());
+  const [showMod,setShowMod]=useState(false);
+  const [form,setForm]=useState({title:'',date:'',time:'',color:'#e53e3e'});
+  const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DAYS_H=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  const firstDay=new Date(curY,curM,1).getDay();
+  const daysInMonth=new Date(curY,curM+1,0).getDate();
+  const today=new Date();
+  const isToday=(d)=>d===today.getDate()&&curM===today.getMonth()&&curY===today.getFullYear();
+
+  const selDateStr=`${curY}-${String(curM+1).padStart(2,'0')}-${String(selDay).padStart(2,'0')}`;
+  const selEvents=(state.events||[]).filter(e=>e.date===selDateStr);
+  const monthLabel=`${String(selDay).toString().padStart(2,'0')} De ${MONTHS[curM]}`;
+
+  const add=()=>{
+    if(!form.title.trim()) return;
+    setState(p=>({...p,events:[...(p.events||[]),{id:Date.now(),title:form.title,date:form.date||selDateStr,time:form.time,color:form.color}]}));
+    setForm({title:'',date:'',time:'',color:'#e53e3e'});
+    setShowMod(false);
+  };
+  const del=(id)=>setState(p=>({...p,events:(p.events||[]).filter(e=>e.id!==id)}));
+  const upcoming=(state.events||[]).filter(e=>new Date(e.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
+
+  const cells=[];
+  for(let i=0;i<firstDay;i++) cells.push(null);
+  for(let d=1;d<=daysInMonth;d++) cells.push(d);
+
+  return(
+    <div>
+      <div className="ph">
+        <div>
+          <div className="st">Calendario</div>
+          <div className="st-sub">{MONTHS[curM]} {curY}</div>
+        </div>
+        <button className="btn-r-lg" onClick={()=>setShowMod(true)}>+ Nuevo Evento</button>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 280px',gap:16}}>
+        {/* CALENDAR */}
+        <div className="card2">
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
+            <button onClick={()=>{let m=curM-1;let y=curY;if(m<0){m=11;y--;}setCurM(m);setCurY(y);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t2)',fontSize:20,padding:'0 8px'}}>‹</button>
+            <span style={{fontSize:15,fontWeight:700}}>{MONTHS[curM]} {curY}</span>
+            <button onClick={()=>{let m=curM+1;let y=curY;if(m>11){m=0;y++;}setCurM(m);setCurY(y);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t2)',fontSize:20,padding:'0 8px'}}>›</button>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:8}}>
+            {DAYS_H.map(d=><div key={d} style={{textAlign:'center',fontSize:11,color:'var(--t3)',fontWeight:600,padding:'4px'}}>{d}</div>)}
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4}}>
+            {cells.map((d,i)=>{
+              if(!d) return <div key={i}></div>;
+              const ds=`${curY}-${String(curM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+              const hasEv=(state.events||[]).some(e=>e.date===ds);
+              return(
+                <div key={i} onClick={()=>setSelDay(d)} style={{aspectRatio:'1',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',position:'relative',background:isToday(d)?'var(--red)':selDay===d?'var(--bg5)':'transparent',border:isToday(d)?'none':selDay===d?'1px solid var(--red)':'1px solid transparent',fontSize:13,fontWeight:isToday(d)?700:400,transition:'all .12s'}} onMouseOver={e=>{if(!isToday(d)&&selDay!==d)e.currentTarget.style.background='var(--bg4)';}} onMouseOut={e=>{if(!isToday(d)&&selDay!==d)e.currentTarget.style.background='transparent';}}>
+                  {d}
+                  {hasEv&&<div style={{position:'absolute',bottom:3,width:4,height:4,borderRadius:'50%',background:isToday(d)?'#fff':'var(--red)'}}></div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* SELECTED DAY */}
+        <div className="card2">
+          <div style={{fontSize:16,fontWeight:700,marginBottom:16}}>{monthLabel}</div>
+          {selEvents.length===0?(
+            <div style={{textAlign:'center',padding:'30px 0',color:'var(--t3)',fontSize:13}}>Sin eventos</div>
+          ):selEvents.map(e=>(
+            <div key={e.id} style={{display:'flex',alignItems:'center',gap:10,padding:'9px',background:'var(--bg4)',borderRadius:8,marginBottom:6}}>
+              <div style={{width:4,height:30,borderRadius:2,background:e.color||'var(--red)',flexShrink:0}}></div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:500}}>{e.title}</div>
+                {e.time&&<div style={{fontSize:11,color:'var(--t3)'}}>{e.time}</div>}
+              </div>
+              <button className="del" onClick={()=>del(e.id)}>✕</button>
+            </div>
+          ))}
+          <button onClick={()=>{setShowMod(true);setForm({...form,date:selDateStr});}} style={{marginTop:12,width:'100%',background:'transparent',border:'1px dashed var(--bor)',borderRadius:8,padding:'8px',fontSize:12,color:'var(--t3)',cursor:'pointer',fontFamily:'Inter',display:'flex',alignItems:'center',justifyContent:'center',gap:4}} onMouseOver={e=>{e.currentTarget.style.borderColor='var(--red-b)';e.currentTarget.style.color='var(--red)';}} onMouseOut={e=>{e.currentTarget.style.borderColor='var(--bor)';e.currentTarget.style.color='var(--t3)';}}>+ Nuevo Evento</button>
+        </div>
+      </div>
+
+      {/* UPCOMING */}
+      <div className="card2" style={{marginTop:16}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>Próximos eventos</div>
+        {upcoming.length===0?<div style={{textAlign:'center',padding:'20px',color:'var(--t3)',fontSize:13}}>Sin eventos próximos</div>:upcoming.map(e=>(
+          <div key={e.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid var(--bor)'}}>
+            <div style={{width:6,height:6,borderRadius:'50%',background:e.color||'var(--red)',flexShrink:0}}></div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:500}}>{e.title}</div>
+              <div style={{fontSize:11,color:'var(--t3)'}}>{e.date}{e.time?` · ${e.time}`:''}</div>
+            </div>
+            <button className="del" onClick={()=>del(e.id)}>✕</button>
+          </div>
+        ))}
+      </div>
+
+      {showMod&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMod(false)}>
+          <div className="mod">
+            <div className="mod-t">Nuevo Evento</div>
+            <div className="fg"><label className="fl">TÍTULO</label><input className="inp" placeholder="ej. Reunión de trabajo" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} autoFocus onKeyDown={e=>e.key==='Enter'&&add()}/></div>
+            <div className="frow">
+              <div className="fg" style={{flex:1}}><label className="fl">FECHA</label><input className="inp" type="date" value={form.date||selDateStr} onChange={e=>setForm({...form,date:e.target.value})}/></div>
+              <div className="fg" style={{flex:1}}><label className="fl">HORA</label><input className="inp" type="time" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}/></div>
+            </div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <button className="btn btn-ghost" onClick={()=>setShowMod(false)}>Cancelar</button>
+              <button className="btn btn-r" onClick={add}>Crear</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================== ENFOQUE ====================== */
+function PageEnfoque({state,setState,showToast}){
+  const [running,setRunning]=useState(false);
+  const [phase,setPhase]=useState('work');
+  const [secs,setSecs]=useState(state.pomodoro.workMin*60);
+  const [sessions,setSessions]=useState(state.pomodoro.sessionsToday);
+  const [total,setTotal]=useState(state.pomodoro.total||0);
+  const [selTask,setSelTask]=useState('');
+  const iRef=useRef(null);
+
+  const workS=state.pomodoro.workMin*60;
+  const breakS=state.pomodoro.breakMin*60;
+  const longS=(state.pomodoro.longBreakMin||15)*60;
+
+  useEffect(()=>{setSecs(phase==='work'?workS:phase==='break'?breakS:longS);},[phase,state.pomodoro.workMin,state.pomodoro.breakMin,state.pomodoro.longBreakMin]);
+
+  useEffect(()=>{
+    if(running){
+      iRef.current=setInterval(()=>{
+        setSecs(s=>{
+          if(s<=1){
+            clearInterval(iRef.current);setRunning(false);
+            if(phase==='work'){
+              const ns=sessions+1;const nt=total+1;
+              setSessions(ns);setTotal(nt);
+              setState(p=>({...p,pomodoro:{...p.pomodoro,sessionsToday:ns,total:nt}}));
+              showToast({icon:'🍅',title:'+25 XP',sub:'¡Pomodoro completado!'});
+              setPhase((ns%4===0)?'longbreak':'break');
+            } else setPhase('work');
+            return 0;
+          }
+          return s-1;
+        });
+      },1000);
+    }
+    return()=>clearInterval(iRef.current);
+  },[running,phase]);
+
+  const totalSecs=phase==='work'?workS:phase==='break'?breakS:longS;
+  const pct=((totalSecs-secs)/totalSecs)*100;
+  const circ=2*Math.PI*90;
+  const offset=circ-(pct/100)*circ;
+  const m=Math.floor(secs/60).toString().padStart(2,'0');
+  const s2=(secs%60).toString().padStart(2,'0');
+  const pendingTasks=state.tasks.filter(t=>t.status!=='done');
+
+  return(
+    <div>
+      <div className="ph">
+        <div>
+          <div className="st">Enfoque</div>
+          <div className="st-sub">Mantén el enfoque con Pomodoro</div>
+        </div>
+        <button className="btn btn-ghost" style={{display:'flex',alignItems:'center',gap:6,borderColor:'var(--red-b)',color:'var(--red)'}}>⚙ Configuración</button>
+      </div>
+
+      {/* TASK SELECTOR */}
+      <div style={{background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:10,padding:'12px 16px',marginBottom:20,display:'flex',alignItems:'center',gap:10}}>
+        <span style={{fontSize:11,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',flexShrink:0}}>TAREA:</span>
+        <select value={selTask} onChange={e=>setSelTask(e.target.value)} style={{flex:1,background:'transparent',border:'none',color:selTask?'#fff':'var(--t3)',fontSize:13,outline:'none',cursor:'pointer',fontFamily:'Inter'}}>
+          <option value="">Sin tarea seleccionada</option>
+          {pendingTasks.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <span style={{color:'var(--t3)',fontSize:14}}>▾</span>
+      </div>
+
+      {/* TIMER CARD */}
+      <div style={{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:12,padding:'40px 24px',marginBottom:20,display:'flex',flexDirection:'column',alignItems:'center'}}>
+        <div style={{position:'relative',width:200,height:200,marginBottom:20}}>
+          <svg width="200" height="200" style={{transform:'rotate(-90deg)'}}>
+            <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6"/>
+            <circle cx="100" cy="100" r="90" fill="none" stroke={phase==='work'?'var(--red)':phase==='break'?'var(--green)':'var(--purple)'} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{transition:'stroke-dashoffset 1s linear'}}/>
+          </svg>
+          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+            <div style={{fontSize:11,color:'var(--red)',fontWeight:700,letterSpacing:3,textTransform:'uppercase',marginBottom:4}}>
+              {phase==='work'?'FOCO':phase==='break'?'DESCANSO':'PAUSA LARGA'}
+            </div>
+            <div style={{fontSize:52,fontWeight:800,letterSpacing:2,color:running?(phase==='work'?'var(--green)':'var(--orange)'):'#fff'}}>{m}:{s2}</div>
+            <div style={{display:'flex',gap:5,marginTop:8}}>
+              {[...Array(4)].map((_,i)=><div key={i} style={{width:6,height:6,borderRadius:'50%',background:i<(sessions%4)?'var(--red)':'rgba(255,255,255,0.1)'}}></div>)}
+            </div>
+          </div>
+        </div>
+
+        <div style={{display:'flex',alignItems:'center',gap:24}}>
+          <button onClick={()=>{setRunning(false);clearInterval(iRef.current);setSecs(phase==='work'?workS:breakS);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:22,padding:'0 4px'}}>↺</button>
+          <button onClick={()=>setRunning(r=>!r)} style={{width:56,height:56,borderRadius:'50%',background:'var(--red)',border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,color:'#fff',boxShadow:'0 4px 16px rgba(229,62,62,0.4)'}}>
+            {running?'⏸':'▶'}
+          </button>
+          <button onClick={()=>{setRunning(false);clearInterval(iRef.current);setPhase(p=>p==='work'?'break':'work');}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:22,padding:'0 4px'}}>⏭</button>
+        </div>
+
+        <div style={{display:'flex',gap:40,marginTop:16}}>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:24,fontWeight:800}}>{sessions}</div>
+            <div style={{fontSize:11,color:'var(--t3)'}}>hoje</div>
+          </div>
+          <div style={{width:1,background:'var(--bor)'}}></div>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:24,fontWeight:800}}>{total}</div>
+            <div style={{fontSize:11,color:'var(--t3)'}}>total</div>
+          </div>
+        </div>
+      </div>
+
+      {/* HOW IT WORKS */}
+      <div className="card2">
+        <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>Como funciona</div>
+        <div className="g3">
+          {[
+            {ico:'🧠',time:'25min',label:'Trabajo',color:'#ed64a6'},
+            {ico:'☕',time:'5min',label:'Pausa Corta',color:'#48bb78'},
+            {ico:'🏖',time:'15min',label:'Pausa Larga',color:'#9f7aea'},
+          ].map(s=>(
+            <div key={s.label} style={{background:'var(--bg4)',borderRadius:10,padding:'20px 16px',textAlign:'center',border:'1px solid var(--bor)'}}>
+              <div style={{fontSize:28,marginBottom:8}}>{s.ico}</div>
+              <div style={{fontSize:24,fontWeight:800,color:s.color}}>{s.time}</div>
+              <div style={{fontSize:12,color:'var(--t3)',marginTop:4}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:'center',fontSize:12,color:'var(--t3)',marginTop:14,borderTop:'1px solid var(--bor)',paddingTop:12}}>
+          Após 4 pomodoros → Pausa longa de 15 minutos
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ====================== PROGRESO ====================== */
+function ActivityMap(){
+  const weeks=16;
+  const days=7;
+  const today=new Date();
+  const cells=[];
+  for(let w=weeks-1;w>=0;w--){
+    const week=[];
+    for(let d=0;d<days;d++){
+      const date=new Date(today);
+      date.setDate(today.getDate()-(w*7+(days-1-d)));
+      const isToday=date.toDateString()===today.toDateString();
+      week.push({date,isToday,val:isToday?1:0});
+    }
+    cells.push(week);
+  }
+  const MONTHS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const DAY_LABELS=['D','S','T','Q','Q','S','S'];
+  const getColor=(val,isToday)=>{
+    if(isToday) return 'rgba(229,62,62,0.6)';
+    if(val===0) return 'var(--bg4)';
+    if(val<2) return 'rgba(229,62,62,0.2)';
+    if(val<4) return 'rgba(229,62,62,0.5)';
+    return 'var(--red)';
+  };
+  const monthLabels=[];
+  cells.forEach((week,wi)=>{
+    const m=week[0].date.getMonth();
+    if(wi===0||(wi>0&&cells[wi-1][0].date.getMonth()!==m)){
+      monthLabels.push({wi,label:MONTHS[m]});
+    }
+  });
+  return(
+    <div style={{overflowX:'auto'}}>
+      <div style={{display:'flex',gap:3,paddingBottom:4}}>
+        <div style={{width:16}}></div>
+        {cells.map((week,wi)=>(
+          <div key={wi} style={{width:14,fontSize:9,color:'var(--t3)',textAlign:'center'}}>
+            {monthLabels.find(m=>m.wi===wi)?monthLabels.find(m=>m.wi===wi).label:''}
+          </div>
+        ))}
+      </div>
+      <div style={{display:'flex',gap:3}}>
+        <div style={{display:'flex',flexDirection:'column',gap:2,paddingTop:2}}>
+          {DAY_LABELS.map((d,i)=><div key={i} style={{height:14,fontSize:9,color:'var(--t3)',lineHeight:'14px'}}>{d}</div>)}
+        </div>
+        {cells.map((week,wi)=>(
+          <div key={wi} style={{display:'flex',flexDirection:'column',gap:2}}>
+            {week.map((cell,di)=>(
+              <div key={di} title={cell.date.toLocaleDateString()} style={{width:14,height:14,borderRadius:2,background:getColor(cell.val,cell.isToday),border:cell.isToday?'1px solid var(--red)':'none'}}></div>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:6,marginTop:10,justifyContent:'flex-end',fontSize:10,color:'var(--t3)'}}>
+        <span>Menos</span>
+        {['var(--bg4)','rgba(229,62,62,0.2)','rgba(229,62,62,0.5)','rgba(229,62,62,0.8)','var(--red)'].map((c,i)=>(
+          <div key={i} style={{width:12,height:12,borderRadius:2,background:c}}></div>
+        ))}
+        <span>Mais</span>
+      </div>
+    </div>
+  );
+}
+
+function WeeklyChart({habits,tasks,pomodoro}){
+  const days=['quinta','sexta','sábado','domingo','segunda','terça','quarta'];
+  const habitsData=[3,3,3,3,3,3,habits.filter(h=>h.doneToday).length];
+  const tasksData=[4,3,2,1,2,1,tasks.filter(t=>t.status==='done').length];
+  const pomData=[1,1,1,1,1,1,pomodoro.sessionsToday];
+  const maxVal=8;
+  const w=560,h=120,padL=30,padB=20,padT=10;
+  const chartW=w-padL,chartH=h-padB-padT;
+  const getY=(val)=>padT+chartH-(val/maxVal)*chartH;
+  const getX=(i)=>padL+(i/(days.length-1))*chartW;
+  const makePath=(data)=>data.map((v,i)=>`${i===0?'M':'L'}${getX(i).toFixed(1)},${getY(v).toFixed(1)}`).join(' ');
+  const makeArea=(data)=>makePath(data)+` L${getX(days.length-1).toFixed(1)},${(padT+chartH).toFixed(1)} L${getX(0).toFixed(1)},${(padT+chartH).toFixed(1)} Z`;
+  return(
+    <div>
+      <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{display:'block',height:120}}>
+        {[0,2,4,6,8].map(v=>(
+          <g key={v}>
+            <line x1={padL} y1={getY(v)} x2={w} y2={getY(v)} stroke="rgba(255,255,255,0.05)" strokeWidth="1"/>
+            <text x={padL-4} y={getY(v)+4} textAnchor="end" fill="rgba(255,255,255,0.3)" fontSize="9">{v}</text>
+          </g>
+        ))}
+        <path d={makeArea(habitsData)} fill="rgba(72,187,120,0.1)"/>
+        <path d={makePath(habitsData)} fill="none" stroke="#48bb78" strokeWidth="2"/>
+        <path d={makeArea(tasksData)} fill="rgba(229,62,62,0.1)"/>
+        <path d={makePath(tasksData)} fill="none" stroke="#e53e3e" strokeWidth="2"/>
+        <path d={makeArea(pomData)} fill="rgba(159,122,234,0.08)"/>
+        <path d={makePath(pomData)} fill="none" stroke="#9f7aea" strokeWidth="2"/>
+        {days.map((d,i)=>(
+          <text key={i} x={getX(i).toFixed(1)} y={h-4} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize="9">{d}</text>
+        ))}
+      </svg>
+      <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:10,fontSize:11,color:'var(--t3)'}}>
+        {[{c:'#e53e3e',l:'Tareas'},{c:'#48bb78',l:'Hábitos'},{c:'#9f7aea',l:'Pomodoros'}].map(s=>(
+          <div key={s.l} style={{display:'flex',alignItems:'center',gap:5}}>
+            <div style={{width:20,height:2,background:s.c,borderRadius:1}}></div>
+            <div style={{width:6,height:6,borderRadius:'50%',background:s.c}}></div>
+            {s.l}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PageProgreso({state}){
+  const {habits,tasks,pomodoro}=state;
+  const level=state.player?.level||1;
+  const xp=state.player?.xp||0;
+  const xpToNext=state.player?.xpToNext||150;
+  const xpPct=Math.round((xp/xpToNext)*100);
+  const maxStreak=Math.max(...[...habits.map(h=>h.streak),0]);
+  const tasksDone=tasks.filter(t=>t.status==='done').length;
+  const habitsDone=habits.filter(h=>h.doneToday).length;
+  const LEVEL_NAMES=['Aprendiz','Iniciado','Guerrero','Veterano','Élite','Maestro','Leyenda'];
+  const levelName=LEVEL_NAMES[Math.min(level-1,LEVEL_NAMES.length-1)];
+
+  return(
+    <div>
+      <div className="ph">
+        <div><div className="st">Progreso</div><div className="st-sub">Resumen de tu evolución</div></div>
+      </div>
+
+      {/* 4 METRICS */}
+      <div className="g4" style={{marginBottom:18}}>
+        {[
+          {label:'NIVEL ACTUAL',val:level,icon:null},
+          {label:'TAREAS HECHAS',val:tasksDone,icon:null},
+          {label:'HÁBITOS COMPLETADOS',val:habitsDone,icon:null},
+          {label:'RACHA',val:maxStreak,icon:'🔥'},
+        ].map((m,i)=>(
+          <div key={i} className="card2" style={{padding:'20px 18px'}}>
+            <div style={{fontSize:42,fontWeight:800,display:'flex',alignItems:'center',gap:8}}>{m.val}{m.icon&&<span style={{fontSize:28}}>{m.icon}</span>}</div>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:1.2,color:'var(--t3)',textTransform:'uppercase',marginTop:8}}>{m.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* XP & NIVEL */}
+      <div className="card2" style={{marginBottom:18}}>
+        <div style={{fontSize:15,fontWeight:700,marginBottom:14}}>XP & Nivel</div>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+          <span style={{fontSize:18}}>🌿</span>
+          <span style={{background:'var(--red)',color:'#fff',borderRadius:12,padding:'2px 10px',fontSize:12,fontWeight:700}}>Nv. {level}</span>
+          <span style={{fontSize:13,color:'var(--t2)',fontWeight:500}}>{levelName}</span>
+          <span style={{marginLeft:'auto',fontSize:12,color:'var(--t3)'}}>{xp} / {xpToNext}</span>
+        </div>
+        <div style={{height:8,background:'var(--bg4)',borderRadius:4,overflow:'hidden',marginBottom:10}}>
+          <div style={{height:'100%',width:`${xpPct}%`,background:'var(--red)',borderRadius:4,transition:'width .5s'}}></div>
+        </div>
+        <div style={{fontSize:12,color:'var(--t3)',textAlign:'center'}}>{xp} XP acumulados en total</div>
+      </div>
+
+      {/* WEEKLY ACTIVITY */}
+      <div className="card2" style={{marginBottom:18}}>
+        <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>Actividad Semanal</div>
+        <WeeklyChart habits={habits} tasks={tasks} pomodoro={pomodoro}/>
+      </div>
+
+      {/* ACTIVITY MAP */}
+      <div className="card2" style={{marginBottom:18}}>
+        <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>Mapa de Actividad — Últimas 16 semanas</div>
+        <ActivityMap/>
+      </div>
+
+      {/* RADAR */}
+      <div className="card2">
+        <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>Radar de Rendimiento</div>
+        <div style={{display:'flex',justifyContent:'center'}}><Radar scores={state.scores}/></div>
+      </div>
+    </div>
+  );
+}
+
+/* ====================== LOGROS ====================== */
+function PageLogros({state}){
+  const CATS=[
+    {label:'Productividad',count:'0/7',logros:[
+      {ico:'🎯',name:'Primeiro Passo',desc:'Complete sua primeira tarefa',xp:'+50 XP',unlocked:false},
+      {ico:'✅',name:'Produtivo',desc:'Complete 10 tarefas',xp:'+100 XP',unlocked:false},
+      {ico:'⚡',name:'Máquina',desc:'Complete 50 tarefas',xp:'+300 XP',unlocked:false},
+      {ico:'🏛',name:'Centurião',desc:'Complete 100 tarefas',xp:'+500 XP',unlocked:false},
+      {ico:'👑',name:'Lendário da Produção',desc:'Complete 500 tarefas',xp:'+1000 XP',unlocked:false},
+      {ico:'✨',name:'Combo!',desc:'Complete 3 tarefas em sequência em menos de 1 hora',xp:'+75 XP',unlocked:false},
+      {ico:'🔥',name:'Bombeiro',desc:'Complete uma tarefa urgente',xp:'+100 XP',unlocked:false},
+    ]},
+    {label:'Hábitos',count:'0/6',logros:[
+      {ico:'🌱',name:'Semeando',desc:'Complete um hábito pela primeira vez',xp:'+30 XP',unlocked:true},
+      {ico:'💧',name:'Uma Semana Sólida',desc:'Mantenha um streak de 7 dias',xp:'+150 XP',unlocked:false},
+      {ico:'⚙',name:'Mês Perfeito',desc:'Mantenha um streak de 30 dias',xp:'+500 XP',unlocked:false},
+      {ico:'💯',name:'Centenário',desc:'Mantenha um streak de 100 dias',xp:'+1500 XP',unlocked:false},
+      {ico:'🏛',name:'Tríade do Sucesso',desc:'Crie e complete 3 hábitos no mesmo dia',xp:'+100 XP',unlocked:false},
+      {ico:'📋',name:'Habitual',desc:'Registre 100 completions de hábitos',xp:'+200 XP',unlocked:false},
+    ]},
+    {label:'Finanzas',count:'0/5',logros:[
+      {ico:'💵',name:'Consciência Financeira',desc:'Registre sua primeira transação',xp:'+30 XP',unlocked:false},
+      {ico:'📄',name:'Contador',desc:'Registre 30 transações',xp:'+150 XP',unlocked:false},
+      {ico:'💎',name:'CFO Pessoal',desc:'Registre 100 transações',xp:'+400 XP',unlocked:false},
+      {ico:'📋',name:'Orçamentista',desc:'Configure um orçamento por categoria',xp:'+50 XP',unlocked:false},
+      {ico:'✅',name:'No Verde',desc:'Termine o mês com saldo positivo',xp:'+200 XP',unlocked:false},
+    ]},
+    {label:'Enfoque',count:'0/4',logros:[
+      {ico:'🍅',name:'Tomate',desc:'Complete seu primeiro Pomodoro',xp:'+50 XP',unlocked:false},
+      {ico:'🎯',name:'Focado',desc:'Complete 10 sessões Pomodoro',xp:'+150 XP',unlocked:false},
+      {ico:'🏆',name:'Máquina de Foco',desc:'Complete 50 sessões Pomodoro',xp:'+400 XP',unlocked:false},
+      {ico:'🔄',name:'Fluxo Total',desc:'Complete 4 pomodoros em um dia',xp:'+100 XP',unlocked:false},
+    ]},
+    {label:'General',count:'1/12',logros:[
+      {ico:'💪',name:'Primeira Rep',desc:'Complete seu primeiro treino',xp:'+75 XP',unlocked:false},
+      {ico:'🏆',name:'Atleta',desc:'Complete 10 treinos',xp:'+200 XP',unlocked:false},
+      {ico:'💪',name:'Iron Will',desc:'Complete 30 treinos',xp:'+500 XP',unlocked:false},
+      {ico:'⬆',name:'Subindo de Nível',desc:'Alcance o nível 5',xp:'+100 XP',unlocked:false},
+      {ico:'10',name:'Dois Dígitos',desc:'Alcance o nível 10',xp:'+250 XP',unlocked:false},
+      {ico:'⚙',name:'Meio Caminho Andado',desc:'Alcance o nível 25',xp:'+750 XP',unlocked:false},
+      {ico:'⚡',name:'ELITE SUPREMO',desc:'Alcance o nível máximo — Nível 50',xp:'+2000 XP',unlocked:false},
+      {ico:'🎖',name:'Missão Cumprida',desc:'Complete todas as missões diárias de um dia',xp:'+150 XP',unlocked:false},
+      {ico:'🚀',name:'Sonhador',desc:'Crie sua primeira meta',xp:'+30 XP',unlocked:true},
+      {ico:'🏆',name:'Realizador',desc:'Conclua uma meta',xp:'+300 XP',unlocked:false},
+      {ico:'🌟',name:'Visionário',desc:'Crie 5 metas',xp:'+100 XP',unlocked:false},
+      {ico:'💎',name:'Conquistador',desc:'Conclua 5 metas',xp:'+1000 XP',unlocked:false},
+    ]},
+  ];
+
+  const totalUnlocked=CATS.reduce((a,c)=>a+c.logros.filter(l=>l.unlocked).length,0);
+  const totalLogros=CATS.reduce((a,c)=>a+c.logros.length,0);
+  const totalXP=CATS.reduce((a,c)=>a+c.logros.filter(l=>l.unlocked).reduce((b,l)=>b+parseInt(l.xp.replace(/[^0-9]/g,'')),0),0);
+  const pct=Math.round((totalUnlocked/totalLogros)*100);
+
+  return(
+    <div>
+      <div className="ph">
+        <div>
+          <div className="st">Logros</div>
+          <div className="st-sub">{totalUnlocked}/{totalLogros} Desbloqueados · {totalXP} XP bônus</div>
+        </div>
+      </div>
+
+      {/* PROGRESS BAR */}
+      <div className="card2" style={{marginBottom:18}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <span style={{fontSize:13,color:'var(--t2)'}}>Progresso geral</span>
+          <span style={{fontSize:14,fontWeight:700,color:'var(--orange)'}}>{pct}%</span>
+        </div>
+        <div style={{height:8,background:'var(--bg4)',borderRadius:4,overflow:'hidden'}}>
+          <div style={{height:'100%',width:`${pct}%`,background:'var(--yellow)',borderRadius:4,transition:'width .5s'}}></div>
+        </div>
+      </div>
+
+      {/* CATEGORIES */}
+      {CATS.map(cat=>(
+        <div key={cat.label} className="card2" style={{marginBottom:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <div style={{fontSize:15,fontWeight:700}}>{cat.label}</div>
+            <div style={{fontSize:12,color:'var(--t3)'}}>{cat.logros.filter(l=>l.unlocked).length}/{cat.logros.length}</div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+            {cat.logros.map((l,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 12px',background:'var(--bg4)',borderRadius:8,opacity:l.unlocked?1:0.45,border:l.unlocked?'1px solid rgba(246,224,94,0.2)':'1px solid transparent'}}>
+                <div style={{width:38,height:38,borderRadius:8,background:l.unlocked?'rgba(246,224,94,0.1)':'rgba(255,255,255,0.05)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>{l.ico}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:600,color:l.unlocked?'#fff':'var(--t2)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{l.name}{l.unlocked&&<span style={{marginLeft:5,fontSize:11}}>✓</span>}</div>
+                  <div style={{fontSize:11,color:'var(--t3)',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.desc}</div>
+                  <div style={{fontSize:11,color:'var(--orange)',fontWeight:600,marginTop:2}}>{l.xp}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ====================== PLAN DEL DIA ====================== */
+function PagePlan({state,setState}){
+  const [showMod,setShowMod]=useState(false);
+  const [form,setForm]=useState({name:'',priority:'med'});
+  const PRIOS=[{v:'high',l:'Alta',c:'var(--red)',bg:'rgba(229,62,62,0.15)'},{v:'med',l:'Media',c:'var(--orange)',bg:'rgba(237,137,54,0.15)'},{v:'low',l:'Baja',c:'var(--green)',bg:'rgba(72,187,120,0.15)'}];
+  const now=new Date();
+  const ds=now.toLocaleDateString('es',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const toggle=(id)=>setState(p=>({...p,tasks:p.tasks.map(t=>t.id===id?{...t,status:t.status==='done'?'todo':'done'}:t)}));
+  const add=()=>{if(!form.name.trim())return;setState(p=>({...p,tasks:[...p.tasks,{id:Date.now(),name:form.name,status:'todo',priority:form.priority,tags:[]}]}));setForm({name:'',priority:'med'});setShowMod(false);};
+
+  return(
+    <div>
+      <div className="ph">
+        <div><div className="st">Plan del día</div><div className="st-sub" style={{textTransform:'capitalize'}}>{ds}</div></div>
+        <button className="btn-r-lg" onClick={()=>setShowMod(true)}>+ Agregar bloque</button>
+      </div>
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{fontSize:13,fontWeight:700,color:'var(--t2)',letterSpacing:1,textTransform:'uppercase',marginBottom:12}}>📋 TAREAS DE HOY</div>
+        {state.tasks.filter(t=>t.status!=='done').map(t=>{
+          const p=PRIOS.find(x=>x.v===t.priority)||PRIOS[1];
+          return(
+            <div key={t.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid var(--bor)'}}>
+              <div onClick={()=>toggle(t.id)} style={{width:18,height:18,borderRadius:4,border:'2px solid var(--bor2)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,flexShrink:0}}></div>
+              <span style={{flex:1,fontSize:13}}>{t.name}</span>
+              <span style={{background:p.bg,color:p.c,borderRadius:12,padding:'2px 8px',fontSize:11,fontWeight:600}}>{p.l}</span>
+            </div>
+          );
+        })}
+        {state.tasks.filter(t=>t.status==='done').map(t=>(
+          <div key={t.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom:'1px solid var(--bor)'}}>
+            <div style={{width:18,height:18,borderRadius:4,border:'2px solid var(--green)',background:'var(--green)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#fff',flexShrink:0}}>✓</div>
+            <span style={{flex:1,fontSize:13,textDecoration:'line-through',color:'var(--t3)'}}>{t.name}</span>
+          </div>
+        ))}
+      </div>
+      <div className="g2">
+        <div className="card2">
+          <div style={{fontSize:13,fontWeight:700,color:'var(--t2)',letterSpacing:1,textTransform:'uppercase',marginBottom:12}}>🔥 HÁBITOS DE HOY</div>
+          {state.habits.map(h=>(
+            <div key={h.id} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderBottom:'1px solid var(--bor)'}}>
+              <div style={{width:8,height:8,borderRadius:'50%',background:h.doneToday?'var(--green)':'var(--bor2)',flexShrink:0}}></div>
+              <span style={{flex:1,fontSize:13,color:h.doneToday?'var(--t3)':'#fff',textDecoration:h.doneToday?'line-through':'none'}}>{h.name}</span>
+              <span style={{fontSize:11,color:'var(--green)',fontWeight:600}}>+{h.xp}XP</span>
+            </div>
+          ))}
+        </div>
+        <div className="card2">
+          <div style={{fontSize:13,fontWeight:700,color:'var(--t2)',letterSpacing:1,textTransform:'uppercase',marginBottom:12}}>◎ METAS ACTIVAS</div>
+          {state.goals.slice(0,4).map(g=>{
+            const pct=Math.min(100,g.target>0?Math.round((g.cur/g.target)*100):0);
+            return(
+              <div key={g.id} style={{marginBottom:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,marginBottom:3}}>
+                  <span style={{color:'var(--t2)'}}>{g.name.slice(0,20)}{g.name.length>20?'...':''}</span>
+                  <span style={{color:g.color,fontWeight:700}}>{pct}%</span>
+                </div>
+                <div className="pbar"><div className="pfill" style={{width:`${pct}%`,background:g.color}}></div></div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {showMod&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMod(false)}>
+          <div className="mod">
+            <div className="mod-t">Nuevo Bloque</div>
+            <div className="fg"><label className="fl">TAREA</label><input className="inp" placeholder="¿Qué hay que hacer?" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} autoFocus onKeyDown={e=>e.key==='Enter'&&add()}/></div>
+            <div className="fg"><label className="fl">PRIORIDAD</label><select className="inp" value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})}>{PRIOS.map(p=><option key={p.v} value={p.v}>{p.l}</option>)}</select></div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <button className="btn btn-ghost" onClick={()=>setShowMod(false)}>Cancelar</button>
+              <button className="btn btn-r" onClick={add}>Agregar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ====================== PERFIL ====================== */
+function PagePerfil({state,setState,setPage}){
+  const {player,user,habits,tasks,achievements}=state;
+  const level=player?.level||1;
+  const xp=player?.xp||0;
+  const xpToNext=player?.xpToNext||150;
+  const xpPct=Math.round((xp/xpToNext)*100);
+  const maxStreak=Math.max(...[...habits.map(h=>h.streak),0]);
+  const tasksDone=tasks.filter(t=>t.status==='done').length;
+  const LEVEL_NAMES={1:'Aprendiz',2:'Explorador',3:'Guerrero',4:'Veterano',5:'Élite',6:'Maestro',7:'Leyenda'};
+  const levelName=LEVEL_NAMES[Math.min(level,7)]||'Leyenda';
+  const nextLevelName=LEVEL_NAMES[Math.min(level+1,7)]||'Leyenda';
+  const [tab,setTab]=useState('Resumen');
+  const streak=maxStreak;
+  const MULTIPLIER=streak>=100?2:streak>=30?1.75:streak>=14?1.5:streak>=7?1.25:streak>=3?1.1:1;
+  const nextMult=MULTIPLIER===1?'Racha 3d → 1.1x':MULTIPLIER===1.1?'Racha 7d → 1.25x':MULTIPLIER===1.25?'Racha 14d → 1.5x':'Máximo';
+
+  const FIFTY_LEVELS=[
+    {l:1,name:'Aprendiz',desc:'Iniciando a jornada',xp:150},
+    {l:2,name:'Explorador',desc:'Descobrindo o potencial',xp:300},
+    {l:3,name:'Guerrero',desc:'Construindo hábitos',xp:500},
+    {l:4,name:'Veterano',desc:'Consistência real',xp:750},
+    {l:5,name:'Élite',desc:'Domínio crescente',xp:1100},
+    {l:6,name:'Maestro',desc:'Alta performance',xp:1600},
+    {l:7,name:'Leyenda',desc:'Lenda viva',xp:2200},
+    {l:8,name:'Titán',desc:'Força inabalável',xp:3000},
+    {l:9,name:'Supremo',desc:'Quase intocável',xp:4000},
+    {l:10,name:'Eterno',desc:'Acima de todos',xp:5500},
+  ];
+
+  return(
+    <div>
+      {/* PROFILE CARD */}
+      <div className="card2" style={{marginBottom:18,padding:'24px'}}>
+        <div style={{display:'flex',gap:20,alignItems:'flex-start',flexWrap:'wrap'}}>
+          <div style={{position:'relative'}}>
+            <div style={{width:90,height:90,borderRadius:16,background:'var(--red)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:36,fontWeight:800}}>{user.avatar||'J'}</div>
+            <div style={{position:'absolute',bottom:-8,right:-8,background:'var(--red)',borderRadius:'50%',width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,border:'2px solid var(--bg2)'}}>{level}</div>
+          </div>
+          <div style={{flex:1,minWidth:200}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
+              <div style={{fontSize:22,fontWeight:800}}>{user.name}</div>
+              <span style={{fontSize:14,cursor:'pointer',color:'var(--t3)'}}>✏</span>
+            </div>
+            <div style={{fontSize:13,color:'var(--t3)',marginBottom:8}}>{user.email||'usuario@email.com'}</div>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:12}}>
+              <span style={{fontSize:16}}>🇵🇾</span>
+              <span style={{fontSize:13,color:'var(--t2)'}}>Paraguay</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
+              <span style={{fontSize:16}}>🌿</span>
+              <span style={{fontSize:14,fontWeight:600,color:'var(--green)'}}>{levelName}</span>
+              <span style={{fontSize:12,color:'var(--t3)'}}>— Iniciando a jornada</span>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <span style={{background:'var(--red)',color:'#fff',borderRadius:12,padding:'2px 10px',fontSize:11,fontWeight:700}}>Nv. {level}</span>
+              <span style={{fontSize:12,color:'var(--t2)'}}>{levelName}</span>
+              <span style={{marginLeft:'auto',fontSize:12,color:'var(--t3)'}}>{xp} / {xpToNext}</span>
+            </div>
+            <div style={{height:6,background:'var(--bg4)',borderRadius:3,overflow:'hidden',marginBottom:12}}>
+              <div style={{height:'100%',width:`${xpPct}%`,background:'var(--red)',borderRadius:3,transition:'width .5s'}}></div>
+            </div>
+            <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
+              {[
+                {val:xp,label:'XP Total'},
+                {val:streak,label:'Racha actual',icon:'🔥'},
+                {val:maxStreak,label:'Racha más larga'},
+                {val:1,label:'Logros'},
+                {val:1,label:'Insignias'},
+              ].map((s,i)=>(
+                <div key={i} style={{textAlign:'center'}}>
+                  <div style={{fontSize:20,fontWeight:800,display:'flex',alignItems:'center',gap:4,justifyContent:'center'}}>{s.val}{s.icon&&<span style={{fontSize:16}}>{s.icon}</span>}</div>
+                  <div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:13,color:'var(--red)',marginBottom:4}}>🔥</div>
+            <div style={{fontSize:32,fontWeight:800}}>{streak}</div>
+            <div style={{fontSize:10,color:'var(--t3)',textTransform:'uppercase',letterSpacing:1}}>DIA</div>
+            <div style={{display:'flex',gap:6,marginTop:8,justifyContent:'flex-end'}}>
+              {[3,7,14,30,100].map(n=>(
+                <div key={n} style={{width:28,height:28,borderRadius:6,background:streak>=n?'var(--red)':'var(--bg4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:streak>=n?'#fff':'var(--t3)'}}>{n}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+        {/* BADGES */}
+        <div style={{marginTop:16,display:'flex',gap:8}}>
+          <div style={{width:40,height:40,borderRadius:8,background:'rgba(72,187,120,0.1)',border:'1px solid rgba(72,187,120,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>🌿</div>
+        </div>
+      </div>
+
+      {/* XP MULTIPLIER */}
+      <div className="card2" style={{marginBottom:18,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:700}}>Multiplicador de XP</div>
+          <div style={{fontSize:12,color:'var(--t3)',marginTop:3}}>Basado en tu racha de {streak} días</div>
+        </div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:28,fontWeight:800,color:'var(--yellow)'}}>{MULTIPLIER}x</div>
+          <div style={{fontSize:11,color:'var(--t3)'}}>{nextMult}</div>
+        </div>
+      </div>
+
+      {/* TABS */}
+      <div className="tab-line" style={{marginBottom:20}}>
+        {['Resumen','50 Niveles','Logros','Insignias'].map(t=>(
+          <button key={t} className={`tabl ${tab===t?'on':''}`} onClick={()=>setTab(t)}>{t}</button>
+        ))}
+      </div>
+
+      {tab==='Resumen'&&(
+        <div className="g2">
+          <div className="card2">
+            <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>Próximo Nivel</div>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{width:44,height:44,borderRadius:10,background:'rgba(99,179,237,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>🔵</div>
+              <div>
+                <div style={{fontSize:14,fontWeight:700}}>Nivel {level+1} — {nextLevelName}</div>
+                <div style={{fontSize:12,color:'var(--t3)',marginTop:2}}>Descobrindo o potencial</div>
+                <div style={{fontSize:12,color:'var(--orange)',marginTop:2}}>Faltan {xpToNext-xp} XP</div>
+              </div>
+            </div>
+          </div>
+          <div className="card2">
+            <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>Logros Recientes</div>
+            <div style={{width:44,height:44,borderRadius:10,background:'rgba(72,187,120,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24}}>🚀</div>
+          </div>
+        </div>
+      )}
+      {tab==='50 Niveles'&&(
+        <div className="card2">
+          <div style={{fontSize:14,fontWeight:700,marginBottom:14}}>Mapa de Niveles</div>
+          {FIFTY_LEVELS.map(lv=>(
+            <div key={lv.l} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid var(--bor)',opacity:lv.l<=level?1:0.5}}>
+              <div style={{width:36,height:36,borderRadius:8,background:lv.l<=level?'var(--red)':'var(--bg4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,flexShrink:0}}>{lv.l}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600,color:lv.l<=level?'#fff':'var(--t2)'}}>{lv.name}</div>
+                <div style={{fontSize:11,color:'var(--t3)'}}>{lv.desc}</div>
+              </div>
+              <div style={{fontSize:11,color:'var(--t3)'}}>{lv.xp} XP</div>
+              {lv.l<=level&&<span style={{color:'var(--green)',fontSize:14}}>✓</span>}
+              {lv.l===level+1&&<span style={{color:'var(--orange)',fontSize:11}}>Siguiente</span>}
+            </div>
+          ))}
+          <div style={{textAlign:'center',padding:'14px',fontSize:12,color:'var(--t3)'}}>... hasta el Nivel 50</div>
+        </div>
+      )}
+      {tab==='Logros'&&<div style={{cursor:'pointer'}} onClick={()=>setPage('logros')}><div className="empty"><div className="ei">🏆</div>Ver todos los logros →</div></div>}
+      {tab==='Insignias'&&<div className="empty"><div className="ei">🎖</div>Gana insignias completando desafíos</div>}
+    </div>
+  );
+}
+
+/* ====================== CONFIG ====================== */
+function PageConfig({state,setState,darkMode,setDarkMode,handleNotif}){
+  const [accentColor,setAccentColor]=useState(state.config?.accent||'#e53e3e');
+  const [currency,setCurrency]=useState(state.config?.currency||'USD');
+  const [currencySearch,setCurrencySearch]=useState('');
+  const [showTemplates,setShowTemplates]=useState(false);
+
+  const COLORS=[
+    {name:'Rojo',c:'#e53e3e'},{name:'Azul',c:'#4299e1'},
+    {name:'Verde',c:'#48bb78'},{name:'Morado',c:'#9f7aea'},
+    {name:'Naranja',c:'#ed8936'},{name:'Gris',c:'#718096'},
+  ];
+  const CURRENCIES=[
+    {code:'USD',name:'Dólar Americano',sym:'$',flag:'US'},
+    {code:'EUR',name:'Euro',sym:'€',flag:'EU'},
+    {code:'GBP',name:'Libra Esterlina',sym:'£',flag:'GB'},
+    {code:'JPY',name:'Iene Japonês',sym:'¥',flag:'JP'},
+    {code:'CNY',name:'Yuan Chinês',sym:'¥',flag:'CN'},
+    {code:'INR',name:'Rupia Indiana',sym:'₹',flag:'IN'},
+    {code:'CAD',name:'Dólar Canadense',sym:'C$',flag:'CA'},
+    {code:'ARS',name:'Peso Argentino',sym:'$',flag:'AR'},
+    {code:'BRL',name:'Real Brasileiro',sym:'R$',flag:'BR'},
+    {code:'MXN',name:'Peso Mexicano',sym:'$',flag:'MX'},
+    {code:'PYG',name:'Guaraní Paraguayo',sym:'₲',flag:'PY'},
+    {code:'CLP',name:'Peso Chileno',sym:'$',flag:'CL'},
+    {code:'COP',name:'Peso Colombiano',sym:'$',flag:'CO'},
+    {code:'PEN',name:'Sol Peruano',sym:'S/',flag:'PE'},
+  ];
+  const filteredCurrencies=CURRENCIES.filter(c=>
+    c.code.toLowerCase().includes(currencySearch.toLowerCase())||
+    c.name.toLowerCase().includes(currencySearch.toLowerCase())
+  );
+
+  const TEMPLATES=[
+    {ico:'🚀',name:'Emprendedor',desc:'Enfoque en negocios, networking, ingresos y crecimiento personal.',color:'#ed8936'},
+    {ico:'💻',name:'Desarrollador',desc:'Código diario, aprendizaje técnico, proyectos personales y carrera tech.',color:'#4299e1'},
+    {ico:'💪',name:'Atleta',desc:'Entrenamiento intenso, nutrición, recuperación y rendimiento físico.',color:'#48bb78'},
+    {ico:'📚',name:'Estudiante',desc:'Repaso, foco profundo, exámenes de ingreso, universidad o concursos.',color:'#9f7aea'},
+    {ico:'👔',name:'Ejecutivo',desc:'Liderazgo, estrategia, rendimiento del equipo y resultados.',color:'#718096'},
+    {ico:'🎨',name:'Creativo',desc:'Arte, diseño, escritura, música o contenido — creatividad al frente.',color:'#ed64a6'},
+    {ico:'👨‍👩‍👧',name:'Padre / Madre de Familia',desc:'Equilibrio, salud familiar, finanzas del hogar y calidad de vida.',color:'#f6ad55'},
+  ];
+
+  const applyTemplate=(template)=>{
+    const templates={
+      'Emprendedor':{
+        habits:[
+          {id:Date.now()+1,name:'Revisar metas del negocio',streak:0,doneToday:false,xp:20,cat:'trabajo',icon:'🎯'},
+          {id:Date.now()+2,name:'Networking (1 contacto)',streak:0,doneToday:false,xp:15,cat:'trabajo',icon:'🤝'},
+          {id:Date.now()+3,name:'Leer 30 min (negocios)',streak:0,doneToday:false,xp:15,cat:'aprendizaje',icon:'📚'},
+          {id:Date.now()+4,name:'Ejercicio matutino',streak:0,doneToday:false,xp:20,cat:'salud',icon:'💪'},
+        ],
+        goals:[
+          {id:Date.now()+10,name:'Primer cliente',cur:0,target:1,unit:'cliente',cat:'Carrera',icon:'🚀',color:'#ed8936'},
+          {id:Date.now()+11,name:'Ingreso mensual $1000',cur:0,target:1000,unit:'$',cat:'Finanzas',icon:'💰',color:'#48bb78'},
+        ],
+        tasks:[
+          {id:Date.now()+20,name:'Definir propuesta de valor',status:'todo',priority:'Alta',tags:['estrategia']},
+          {id:Date.now()+21,name:'Crear perfil de LinkedIn',status:'todo',priority:'Media',tags:['marketing']},
+        ],
+      },
+      'Atleta':{
+        habits:[
+          {id:Date.now()+1,name:'Entrenamiento diario',streak:0,doneToday:false,xp:25,cat:'deportes',icon:'🏋'},
+          {id:Date.now()+2,name:'Hidratación 3L agua',streak:0,doneToday:false,xp:10,cat:'salud',icon:'💧'},
+          {id:Date.now()+3,name:'Dormir 8 horas',streak:0,doneToday:false,xp:15,cat:'salud',icon:'😴'},
+          {id:Date.now()+4,name:'Stretching / movilidad',streak:0,doneToday:false,xp:10,cat:'salud',icon:'🧘'},
+        ],
+        goals:[
+          {id:Date.now()+10,name:'Correr 5km sin parar',cur:0,target:5,unit:'km',cat:'Salud',icon:'🏃',color:'#48bb78'},
+          {id:Date.now()+11,name:'Perder 5kg',cur:0,target:5,unit:'kg',cat:'Salud',icon:'💪',color:'#e53e3e'},
+        ],
+        tasks:[
+          {id:Date.now()+20,name:'Diseñar rutina semanal',status:'todo',priority:'Alta',tags:['planificación']},
+        ],
+      },
+      'Estudiante':{
+        habits:[
+          {id:Date.now()+1,name:'Estudiar 2 horas',streak:0,doneToday:false,xp:25,cat:'aprendizaje',icon:'📖'},
+          {id:Date.now()+2,name:'Repasar notas del día',streak:0,doneToday:false,xp:15,cat:'aprendizaje',icon:'📝'},
+          {id:Date.now()+3,name:'Pomodoro de estudio',streak:0,doneToday:false,xp:20,cat:'aprendizaje',icon:'🍅'},
+        ],
+        goals:[
+          {id:Date.now()+10,name:'Aprobar examen final',cur:0,target:100,unit:'%',cat:'Educación',icon:'📚',color:'#9f7aea'},
+        ],
+        tasks:[
+          {id:Date.now()+20,name:'Crear cronograma de estudio',status:'todo',priority:'Alta',tags:['organización']},
+        ],
+      },
+    };
+    const tpl=templates[template.name]||templates['Emprendedor'];
+    if(confirm(`¿Aplicar template "${template.name}"? Esto reemplazará tus hábitos, metas y tareas actuales.`)){
+      setState(p=>({...p,...tpl}));
+      setShowTemplates(false);
+    }
+  };
+
+  const saveConfig=()=>{
+    setState(p=>({...p,config:{...p.config,accent:accentColor,dark:darkMode,currency}}));
+    document.documentElement.style.setProperty('--red',accentColor);
+    const r=parseInt(accentColor.slice(1,3),16),g=parseInt(accentColor.slice(3,5),16),b=parseInt(accentColor.slice(5,7),16);
+    document.documentElement.style.setProperty('--red2',`rgba(${r},${g},${b},0.8)`);
+    document.documentElement.style.setProperty('--red-dim',`rgba(${r},${g},${b},0.12)`);
+    document.documentElement.style.setProperty('--red-b',`rgba(${r},${g},${b},0.3)`);
+  };
+
+  const reset=()=>{
+    if(confirm('¿Limpiar todos los datos? Esta acción no se puede deshacer.')){
+      localStorage.removeItem(SK);location.reload();
+    }
+  };
+
+  return(
+    <div style={{maxWidth:700}}>
+      <div className="ph"><div className="st">Configuración</div><div className="st-sub">Personaliza la apariencia de EliteLab</div></div>
+
+      {/* DARK/LIGHT MODE */}
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>Modo de Visualización</div>
+        <div className="g2" style={{gap:12}}>
+          {[
+            {label:'Oscuro',ico:'🌙',dark:true},
+            {label:'Claro',ico:'☀',dark:false},
+          ].map(m=>(
+            <div key={m.label} onClick={()=>{setDarkMode(m.dark);setState(p=>({...p,config:{...p.config,dark:m.dark}}));}} style={{border:`2px solid ${darkMode===m.dark?'var(--red)':'var(--bor)'}`,borderRadius:10,padding:'16px',cursor:'pointer',position:'relative'}}>
+              <div style={{height:50,background:m.dark?'#111':'#e5e5e5',borderRadius:8,marginBottom:10,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+                <div style={{width:40,height:6,borderRadius:3,background:m.dark?'#333':'#ccc'}}></div>
+                <div style={{width:16,height:16,borderRadius:3,background:'var(--red)'}}></div>
+              </div>
+              <div style={{textAlign:'center',fontSize:13,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>{m.ico} {m.label}</div>
+              {darkMode===m.dark&&<div style={{position:'absolute',top:8,right:8,width:20,height:20,borderRadius:'50%',background:'var(--red)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#fff'}}>✓</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* COLOR PRINCIPAL */}
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:4}}>Color Principal</div>
+        <div style={{fontSize:12,color:'var(--t3)',marginBottom:14}}>Cambia el color de acento en toda la interfaz</div>
+        <div className="g4" style={{gap:10}}>
+          {COLORS.map(c=>(
+            <div key={c.name} onClick={()=>setAccentColor(c.c)} style={{border:`2px solid ${accentColor===c.c?c.c:'var(--bor)'}`,borderRadius:10,padding:'14px 10px',cursor:'pointer',textAlign:'center',background:accentColor===c.c?`${c.c}11`:'transparent'}}>
+              <div style={{width:32,height:32,borderRadius:'50%',background:c.c,margin:'0 auto 8px',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                {accentColor===c.c&&<span style={{color:'#fff',fontSize:14}}>✓</span>}
+              </div>
+              <div style={{fontSize:12,color:accentColor===c.c?'#fff':'var(--t2)'}}>{c.name}</div>
+            </div>
+          ))}
+        </div>
+        <button className="btn btn-r" style={{marginTop:14}} onClick={saveConfig}>Aplicar cambios</button>
+      </div>
+
+      {/* NOTIFICACIONES */}
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:4,display:'flex',alignItems:'center',gap:8}}>🔔 Notificaciones</div>
+        <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Recibí alertas aunque la aplicación esté cerrada</div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',background:'var(--bg4)',border:'1px solid var(--bor)',borderRadius:8,padding:'12px 14px'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,fontSize:13,color:'var(--t2)'}}>
+            {typeof Notification!=='undefined'&&Notification.permission==='granted'?'🔔 Notificaciones activadas':'🔕 Notificaciones desactivadas'}
+          </div>
+          <button className="btn btn-r btn-sm" onClick={handleNotif}>
+            {typeof Notification!=='undefined'&&Notification.permission==='granted'?'Probar':'Activar'}
+          </button>
+        </div>
+      </div>
+
+      {/* MONEDA */}
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:4,display:'flex',alignItems:'center',gap:8}}>💱 Moneda</div>
+        <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Moneda predeterminada para el módulo financiero</div>
+        <div style={{background:'var(--bg4)',border:'1px solid var(--bor)',borderRadius:8,padding:'12px 14px',marginBottom:10,display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontSize:12,color:'var(--t3)',fontWeight:700}}>{CURRENCIES.find(c=>c.code===currency)?.flag||'US'}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:600}}>{currency} — {CURRENCIES.find(c=>c.code===currency)?.name}</div>
+          </div>
+        </div>
+        <div style={{position:'relative',marginBottom:8}}>
+          <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--t3)',fontSize:14}}>🔍</span>
+          <input className="inp" placeholder="Buscar moneda..." value={currencySearch} onChange={e=>setCurrencySearch(e.target.value)} style={{paddingLeft:36}}/>
+        </div>
+        <div style={{maxHeight:180,overflowY:'auto',background:'var(--bg4)',borderRadius:8,border:'1px solid var(--bor)'}}>
+          {filteredCurrencies.map(c=>(
+            <div key={c.code} onClick={()=>setCurrency(c.code)} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',cursor:'pointer',background:currency===c.code?'rgba(229,62,62,0.1)':'transparent',borderBottom:'1px solid var(--bor)'}}>
+              <span style={{fontSize:11,color:'var(--t3)',fontWeight:700,width:20}}>{c.flag}</span>
+              <span style={{fontSize:12,color:'var(--t3)',fontWeight:700,width:36}}>{c.code}</span>
+              <span style={{flex:1,fontSize:13}}>{c.name}</span>
+              <span style={{fontSize:12,color:'var(--t3)'}}>{c.sym}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* TEMPLATES */}
+      <div className="card2" style={{marginBottom:14}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:4,display:'flex',alignItems:'center',gap:8}}>✦ Templates de Perfil</div>
+        <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Setup com 1 clique — popula hábitos, metas, tarefas, treinos, orçamentos e pastas de notas.</div>
+        {!showTemplates?(
+          <>
+            <div style={{background:'rgba(237,137,54,0.1)',border:'1px solid rgba(237,137,54,0.3)',borderRadius:8,padding:'10px 14px',marginBottom:12,fontSize:12,color:'var(--orange)',display:'flex',gap:8}}>
+              <span>⚠</span>
+              <span>Aplicar um template irá <strong>substituir</strong> seus hábitos, metas, tarefas, treinos, orçamentos e pastas de notas existentes. Esta ação não pode ser desfeita.</span>
+            </div>
+            <button className="btn btn-r" style={{width:'100%',justifyContent:'center'}} onClick={()=>setShowTemplates(true)}>✦ Ver templates disponíveis</button>
+          </>
+        ):(
+          <>
+            <div className="g4" style={{gap:10,marginBottom:12}}>
+              {TEMPLATES.map(t=>(
+                <div key={t.name} onClick={()=>applyTemplate(t)} style={{background:'var(--bg4)',border:'1px solid var(--bor)',borderRadius:10,padding:'16px 12px',cursor:'pointer',position:'relative',transition:'all .12s'}} onMouseOver={e=>e.currentTarget.style.borderColor=t.color} onMouseOut={e=>e.currentTarget.style.borderColor='var(--bor)'}>
+                  <div style={{position:'absolute',top:6,right:6,width:8,height:8,borderRadius:'50%',background:t.color}}></div>
+                  <div style={{fontSize:28,marginBottom:8,textAlign:'center'}}>{t.ico}</div>
+                  <div style={{fontSize:12,fontWeight:700,marginBottom:4,textAlign:'center'}}>{t.name}</div>
+                  <div style={{fontSize:10,color:'var(--t3)',lineHeight:1.4,textAlign:'center'}}>{t.desc}</div>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-ghost" style={{width:'100%',justifyContent:'center'}} onClick={()=>setShowTemplates(false)}>Cancelar</button>
+          </>
+        )}
+      </div>
+
+      {/* LIMPIAR DATOS */}
+      <div className="card2" style={{marginBottom:14,border:'1px solid var(--red-b)'}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:4,color:'var(--red)',display:'flex',alignItems:'center',gap:8}}>🗑 Limpiar datos del perfil</div>
+        <div style={{fontSize:12,color:'var(--t3)',marginBottom:12}}>Elimina todos los hábitos, metas, tareas, entrenamientos y presupuestos. Útil si elegiste un template por error y quieres empezar desde cero.</div>
+        <button onClick={reset} style={{width:'100%',background:'transparent',border:'1px solid var(--bor)',borderRadius:8,padding:'11px',fontSize:13,color:'var(--t2)',cursor:'pointer',fontFamily:'Inter',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>🗑 Limpiar todos los datos</button>
+      </div>
+
+      {/* CERRAR SESIÓN */}
+      <div style={{textAlign:'center',padding:'10px'}}>
+        <button onClick={reset} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:13,fontFamily:'Inter',display:'flex',alignItems:'center',gap:6,margin:'0 auto'}}>→ Cerrar sesión</button>
+      </div>
+    </div>
+  );
+}
+
+function PageComingSoon({title}){
+  return<div className="empty" style={{paddingTop:80}}><div className="ei">🚧</div><div style={{fontSize:18,fontWeight:700,color:'var(--t2)',marginBottom:8}}>{title}</div><div>Próximamente disponible</div></div>;
+}
+
+const var_r='var(--red)';
+
+/* ====================== APP ====================== */
+function App(){
+  const [state,setRaw]=useState(load);
+  const [page,setPage]=useState('dashboard');
+  const [toast,setToast]=useState(null);
+  const [notifStatus,setNotifStatus]=useState(typeof Notification!=='undefined'?Notification.permission:'default');
+  const [canInstall,setCanInstall]=useState(false);
+  const [installed,setInstalled]=useState(false);
+  const [darkMode,setDarkMode]=useState(true);
+  const [sbOpen,setSbOpen]=useState(true);
+
+  // Apply accent color from config
+  useEffect(()=>{
+    const accent=state.config?.accent;
+    if(accent){
+      document.documentElement.style.setProperty('--red',accent);
+      const r=parseInt(accent.slice(1,3),16),g=parseInt(accent.slice(3,5),16),b=parseInt(accent.slice(5,7),16);
+      document.documentElement.style.setProperty('--red2',`rgba(${r},${g},${b},0.8)`);
+      document.documentElement.style.setProperty('--red-dim',`rgba(${r},${g},${b},0.12)`);
+      document.documentElement.style.setProperty('--red-b',`rgba(${r},${g},${b},0.3)`);
+    }
+  },[state.config?.accent]);
+
+  // Apply dark/light mode
+  useEffect(()=>{
+    if(!darkMode){
+      document.documentElement.style.setProperty('--bg','#f0f0f0');
+      document.documentElement.style.setProperty('--bg2','#ffffff');
+      document.documentElement.style.setProperty('--bg3','#f5f5f5');
+      document.documentElement.style.setProperty('--bg4','#e8e8e8');
+      document.documentElement.style.setProperty('--t','#111111');
+      document.documentElement.style.setProperty('--t2','#444444');
+      document.documentElement.style.setProperty('--t3','#888888');
+      document.documentElement.style.setProperty('--bor','rgba(0,0,0,0.1)');
+      document.documentElement.style.setProperty('--bor2','rgba(0,0,0,0.2)');
+      document.body.style.background='#f0f0f0';
+      document.body.style.color='#111';
+    } else {
+      document.documentElement.style.setProperty('--bg','#0a0a0a');
+      document.documentElement.style.setProperty('--bg2','#111');
+      document.documentElement.style.setProperty('--bg3','#181818');
+      document.documentElement.style.setProperty('--bg4','#1f1f1f');
+      document.documentElement.style.setProperty('--t','#fff');
+      document.documentElement.style.setProperty('--t2','#a0a0a0');
+      document.documentElement.style.setProperty('--t3','#555');
+      document.documentElement.style.setProperty('--bor','rgba(255,255,255,0.07)');
+      document.documentElement.style.setProperty('--bor2','rgba(255,255,255,0.12)');
+      document.body.style.background='#0a0a0a';
+      document.body.style.color='#fff';
+    }
+  },[darkMode]);
+
+  // Sync darkMode with config
+  useEffect(()=>{
+    if(state.config?.dark===false) setDarkMode(false);
+  },[state.config?.dark]);
+
+  // Check install prompt
+  useEffect(()=>{
+    const check=()=>{setCanInstall(!!window._dip);setInstalled(!!window._installed);};
+    check();
+    const t=setInterval(check,1000);
+    return()=>clearInterval(t);
+  },[]);
+
+  const handleInstall=async()=>{
+    if(window._dip){
+      window._dip.prompt();
+      const result=await window._dip.userChoice;
+      if(result.outcome==='accepted'){setInstalled(true);setCanInstall(false);showToast({icon:'📱',title:'¡App instalada!',sub:'EliteLab está en tu pantalla de inicio'});}
+      window._dip=null;
+    } else {
+      // Show instructions for iOS/non-supported
+      showToast({icon:'📱',title:'Instalar EliteLab',sub:'En Safari: compartir → Agregar a inicio. En Chrome: menú → Instalar app'});
+    }
+  };
+
+  const handleNotif=async()=>{
+    if(typeof Notification==='undefined'){showToast({icon:'❌',title:'No soportado',sub:'Tu navegador no soporta notificaciones'});return;}
+    if(Notification.permission==='granted'){
+      new Notification('EliteLab 🔥',{body:'¡Notificaciones ya activadas! Todo funcionando.',icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%23e53e3e"/><text y=".9em" font-size="70" x="15" fill="white">E</text></svg>'});
+      return;
+    }
+    try{
+      const perm=await Notification.requestPermission();
+      setNotifStatus(perm);
+      if(perm==='granted'){
+        new Notification('EliteLab 🔥',{body:'¡Notificaciones activadas! Te avisaremos de tus tareas.'});
+        showToast({icon:'🔔',title:'¡Notificaciones activadas!',sub:'Recibirás alertas de EliteLab'});
+        setState(p=>({...p,showBanner:false}));
+      } else {
+        showToast({icon:'❌',title:'Permiso denegado',sub:'Activa las notificaciones en la configuración del navegador'});
+      }
+    }catch(e){showToast({icon:'❌',title:'Error',sub:'No se pudo solicitar permiso'});}
+  };
+
+  const setState=useCallback((upd)=>{
+    setRaw(prev=>{const next=typeof upd==='function'?upd(prev):upd;save(next);return next;});
+  },[]);
+  const showToast=useCallback((msg)=>setToast(msg),[]);
+
+  // Schedule daily habit reminder if notifications granted
+  useEffect(()=>{
+    if(notifStatus!=='granted') return;
+    const now=new Date();
+    const next9am=new Date(now);
+    next9am.setHours(9,0,0,0);
+    if(next9am<=now) next9am.setDate(next9am.getDate()+1);
+    const ms=next9am-now;
+    const t=setTimeout(()=>{
+      const pending=state.habits.filter(h=>!h.doneToday).length;
+      if(pending>0) new Notification('EliteLab 🔥',{body:`Tienes ${pending} hábito${pending>1?'s':''} pendiente${pending>1?'s':''} hoy`});
+    },Math.min(ms,2147483647));
+    return()=>clearTimeout(t);
+  },[notifStatus,state.habits]);
+
+  const render=()=>{
+    const p={state,setState,showToast,setPage};
+    switch(page){
+      case 'dashboard': return <PageDashboard {...p} handleNotif={handleNotif}/>;
+      case 'habitos': return <PageHabitos {...p}/>;
+      case 'tareas': return <PageTareas {...p}/>;
+      case 'metas': return <PageMetas {...p}/>;
+      case 'finanzas': return <PageFinanzas {...p}/>;
+      case 'entrenamiento': return <PageEntrenamiento {...p}/>;
+      case 'calendario': return <PageCalendario {...p}/>;
+      case 'enfoque': return <PageEnfoque {...p}/>;
+      case 'progreso': return <PageProgreso {...p}/>;
+      case 'logros': return <PageLogros {...p}/>;
+      case 'plan': return <PagePlan {...p}/>;
+      case 'perfil': return <PagePerfil {...p}/>;
+      case 'config': return <PageConfig {...p} darkMode={darkMode} setDarkMode={setDarkMode} handleNotif={handleNotif}/>;
+      default: return <PageComingSoon title={PAGES[page]||page}/>;
+    }
+  };
+
+  const notifBtnLabel = notifStatus==='granted' ? '🔔' : notifStatus==='denied' ? '🔕' : '🔔';
+
+  return(
+    <div className="app">
+      {/* SIDEBAR */}
+      <div className="sb" style={{width:sbOpen?210:0,overflow:sbOpen?'auto':'hidden',transition:'width .2s'}}>
+        <div className="sb-logo" style={{display:'flex',justifyContent:'space-between'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span className="sb-logo-icon">𝐸</span>
+            <span className="sb-logo-txt">EliteLab</span>
+          </div>
+          <button onClick={()=>setSbOpen(false)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:16}}>‹</button>
+        </div>
+        {NAV.map(sec=>(
+          <div key={sec.sec}>
+            <div className="sb-sec">{sec.sec}</div>
+            {sec.items.map(it=>(
+              <div key={it.id} className={`ni ${page===it.id?'active':''}`} onClick={()=>setPage(it.id)}>
+                <span className="ni-ico">{it.ico}</span>
+                <span>{it.l}</span>
+                {it.badge&&<span className={`badge ${it.bc}`}>{it.badge}</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+        <div className="sb-user" style={{cursor:'pointer'}} onClick={()=>setPage('perfil')}>
+          <div className="av">{state.user.avatar||'J'}</div>
+          <div style={{fontSize:13,fontWeight:500}}>{state.user.name}</div>
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main" style={{marginLeft:sbOpen?210:0,transition:'margin-left .2s'}}>
+        <div className="tb">
+          {!sbOpen&&(
+            <button onClick={()=>setSbOpen(true)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--t2)',fontSize:18,marginRight:8}}>☰</button>
+          )}
+          <div className="tb-brand"><span className="tb-ico">𝐸</span><span>EliteLab</span></div>
+          <span className="tb-sep">/</span>
+          <span className="tb-pg">{PAGES[page]||page}</span>
+          <div className="tb-r">
+            <button
+              className="tb-icon"
+              title={notifStatus==='granted'?'Notificaciones activadas':notifStatus==='denied'?'Notificaciones bloqueadas':'Activar notificaciones'}
+              onClick={handleNotif}
+              style={{color:notifStatus==='granted'?'var(--yellow)':notifStatus==='denied'?'var(--red)':'var(--t2)',position:'relative'}}
+            >
+              {notifBtnLabel}
+              {notifStatus==='granted'&&<span style={{position:'absolute',top:2,right:2,width:6,height:6,borderRadius:'50%',background:'var(--green)'}}></span>}
+            </button>
+            {!installed&&(
+              <button className="tb-btn" onClick={handleInstall} title={canInstall?'Instalar EliteLab':'Agregar a pantalla de inicio'}>
+                ⬇ Instalar app
+              </button>
+            )}
+            {installed&&<span style={{fontSize:12,color:'var(--green)',fontWeight:600}}>✓ Instalada</span>}
+            <button className="tb-icon" onClick={()=>setDarkMode(d=>!d)} title={darkMode?'Modo claro':'Modo oscuro'}>
+              {darkMode?'☀':'🌙'}
+            </button>
+          </div>
+        </div>
+        <div className="cnt">{render()}</div>
+      </div>
+
+      {toast&&<Toast msg={toast} onDone={()=>setToast(null)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
