@@ -436,17 +436,28 @@ const supa = {
       if (token && user) {
         this._token = token;
         this._user = JSON.parse(user);
-        // Verify token is still valid
+        // Verify token with timeout
         try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 4000);
           const r = await fetch(this._url + '/user', {
-            headers: {'apikey':SUPA_KEY,'Authorization':'Bearer '+token}
+            headers: {'apikey':SUPA_KEY,'Authorization':'Bearer '+token},
+            signal: controller.signal
           });
+          clearTimeout(timeout);
           if (r.ok) {
             const u = await r.json();
             this._user = u;
             return true;
           }
-        } catch(e) {}
+          // Token invalid - clear it
+          this._token = null; this._user = null;
+          localStorage.removeItem('supa_token');
+          localStorage.removeItem('supa_user');
+        } catch(e) {
+          // Network error or timeout - if we have token, trust it temporarily
+          if (token) return true;
+        }
       }
       return false;
     },
