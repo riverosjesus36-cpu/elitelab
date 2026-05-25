@@ -368,7 +368,253 @@ var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
 </script>
-<script>
+<script>// ── SUPABASE CONFIG ───────────────────────────────────────────────────
+const SUPA_URL = 'https://fgkgeamokgjoiotdcqjc.supabase.co';
+const SUPA_KEY = 'sb_publishable_Oh1_oBW_6wMnKtmlBxsH3A_QUhFqa5e';
+
+// Supabase client minimal (sin librería externa)
+const supa = {
+  _headers: {
+    'Content-Type': 'application/json',
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY
+  },
+  _authHeaders: function(token) {
+    return {...this._headers, 'Authorization': 'Bearer ' + token};
+  },
+
+  // AUTH
+  auth: {
+    _token: null,
+    _user: null,
+    _url: SUPA_URL + '/auth/v1',
+
+    async signUp(email, password) {
+      const r = await fetch(this._url + '/signup', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','apikey':SUPA_KEY},
+        body: JSON.stringify({email, password})
+      });
+      const d = await r.json();
+      if (d.access_token) { this._token = d.access_token; this._user = d.user; }
+      return d;
+    },
+
+    async signIn(email, password) {
+      const r = await fetch(this._url + '/token?grant_type=password', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','apikey':SUPA_KEY},
+        body: JSON.stringify({email, password})
+      });
+      const d = await r.json();
+      if (d.access_token) {
+        this._token = d.access_token;
+        this._user = d.user;
+        localStorage.setItem('supa_token', d.access_token);
+        localStorage.setItem('supa_refresh', d.refresh_token || '');
+        localStorage.setItem('supa_user', JSON.stringify(d.user));
+      }
+      return d;
+    },
+
+    async signOut() {
+      if (this._token) {
+        await fetch(this._url + '/logout', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+this._token}
+        });
+      }
+      this._token = null; this._user = null;
+      localStorage.removeItem('supa_token');
+      localStorage.removeItem('supa_refresh');
+      localStorage.removeItem('supa_user');
+    },
+
+    async restoreSession() {
+      const token = localStorage.getItem('supa_token');
+      const user = localStorage.getItem('supa_user');
+      if (token && user) {
+        this._token = token;
+        this._user = JSON.parse(user);
+        // Verify token is still valid
+        try {
+          const r = await fetch(this._url + '/user', {
+            headers: {'apikey':SUPA_KEY,'Authorization':'Bearer '+token}
+          });
+          if (r.ok) {
+            const u = await r.json();
+            this._user = u;
+            return true;
+          }
+        } catch(e) {}
+      }
+      return false;
+    },
+
+    getUser() { return this._user; },
+    getToken() { return this._token; }
+  },
+
+  // DB operations
+  async select(table, filter) {
+    const token = supa.auth.getToken();
+    if (!token) return [];
+    let url = SUPA_URL + '/rest/v1/' + table + '?select=*';
+    if (filter) url += '&' + filter;
+    const r = await fetch(url, {
+      headers: {...supa._headers, 'Authorization': 'Bearer ' + token}
+    });
+    if (!r.ok) return [];
+    return await r.json();
+  },
+
+  async insert(table, data) {
+    const token = supa.auth.getToken();
+    if (!token) return null;
+    const r = await fetch(SUPA_URL + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: {...supa._headers, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation'},
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return Array.isArray(d) ? d[0] : d;
+  },
+
+  async update(table, id_field, id_val, data) {
+    const token = supa.auth.getToken();
+    if (!token) return null;
+    const r = await fetch(SUPA_URL + '/rest/v1/' + table + '?' + id_field + '=eq.' + id_val, {
+      method: 'PATCH',
+      headers: {...supa._headers, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation'},
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  },
+
+  async delete(table, id_field, id_val) {
+    const token = supa.auth.getToken();
+    if (!token) return false;
+    const r = await fetch(SUPA_URL + '/rest/v1/' + table + '?' + id_field + '=eq.' + id_val, {
+      method: 'DELETE',
+      headers: {...supa._headers, 'Authorization': 'Bearer ' + token}
+    });
+    return r.ok;
+  },
+
+  async upsert(table, data, on_conflict) {
+    const token = supa.auth.getToken();
+    if (!token) return null;
+    let url = SUPA_URL + '/rest/v1/' + table;
+    if (on_conflict) url += '?on_conflict=' + on_conflict;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {...supa._headers, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation,resolution=merge-duplicates'},
+      body: JSON.stringify(data)
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  }
+};
+
+
+// ── LOGIN / REGISTER PAGE ─────────────────────────────────────────────
+function AuthPage({onAuth}) {
+  const [mode, setMode] = React.useState('login');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [success, setSuccess] = React.useState('');
+
+  const handle = async (e) => {
+    e.preventDefault();
+    if (!email || !password) { setError('Completa todos los campos'); return; }
+    if (password.length < 6) { setError('La contrasena debe tener al menos 6 caracteres'); return; }
+    setLoading(true); setError(''); setSuccess('');
+    try {
+      let result;
+      if (mode === 'login') {
+        result = await supa.auth.signIn(email, password);
+        if (result.error) { setError(result.error.message || 'Error al iniciar sesion'); }
+        else if (result.access_token) { onAuth(result.user); }
+        else { setError('Credenciales incorrectas'); }
+      } else {
+        result = await supa.auth.signUp(email, password);
+        if (result.error) { setError(result.error.message || 'Error al registrarse'); }
+        else if (result.id || result.user) {
+          setSuccess('Cuenta creada! Revisa tu email para confirmar (o inicia sesion directo).');
+          setTimeout(() => setMode('login'), 3000);
+        } else { setError('Error al crear cuenta'); }
+      }
+    } catch(e) {
+      setError('Error de conexion. Intenta de nuevo.');
+    }
+    setLoading(false);
+  };
+
+  return React.createElement('div', {
+    style:{minHeight:'100vh',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}
+  },
+    React.createElement('div', {
+      style:{width:400,maxWidth:'94vw',background:'#111',border:'1px solid rgba(255,255,255,0.08)',borderRadius:16,padding:36,boxShadow:'0 25px 50px rgba(0,0,0,0.5)'}
+    },
+      // Logo
+      React.createElement('div', {style:{textAlign:'center',marginBottom:28}},
+        React.createElement('div', {style:{width:54,height:54,borderRadius:12,background:'#e53e3e',display:'flex',alignItems:'center',justifyContent:'center',fontSize:30,fontStyle:'italic',fontWeight:800,margin:'0 auto 12px',fontFamily:'Georgia,serif',color:'#fff'}}, 'E'),
+        React.createElement('div', {style:{fontSize:22,fontWeight:700,color:'#fff',letterSpacing:2}}, 'EliteLab'),
+        React.createElement('div', {style:{fontSize:13,color:'rgba(255,255,255,0.4)',marginTop:4}}, 'Productividad Gamificada')
+      ),
+
+      // Title
+      React.createElement('div', {style:{fontSize:20,fontWeight:700,color:'#fff',marginBottom:6,textAlign:'center'}},
+        mode === 'login' ? 'Iniciar sesion' : 'Crear cuenta'
+      ),
+      React.createElement('div', {style:{fontSize:13,color:'rgba(255,255,255,0.4)',marginBottom:24,textAlign:'center'}},
+        mode === 'login' ? 'Bienvenido de vuelta' : 'Comienza tu aventura hoy'
+      ),
+
+      // Form
+      React.createElement('form', {onSubmit:handle},
+        React.createElement('div', {style:{marginBottom:14}},
+          React.createElement('label', {style:{fontSize:11,color:'rgba(255,255,255,0.5)',marginBottom:6,display:'block',letterSpacing:1}}, 'EMAIL'),
+          React.createElement('input', {
+            type:'email', value:email, onChange:e=>setEmail(e.target.value),
+            placeholder:'tu@email.com', autoFocus:true,
+            style:{width:'100%',background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:8,padding:'10px 14px',color:'#fff',fontSize:14,outline:'none',boxSizing:'border-box'}
+          })
+        ),
+        React.createElement('div', {style:{marginBottom:20}},
+          React.createElement('label', {style:{fontSize:11,color:'rgba(255,255,255,0.5)',marginBottom:6,display:'block',letterSpacing:1}}, 'CONTRASENA'),
+          React.createElement('input', {
+            type:'password', value:password, onChange:e=>setPassword(e.target.value),
+            placeholder:'Minimo 6 caracteres',
+            style:{width:'100%',background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:8,padding:'10px 14px',color:'#fff',fontSize:14,outline:'none',boxSizing:'border-box'}
+          })
+        ),
+
+        error && React.createElement('div', {style:{background:'rgba(229,62,62,0.1)',border:'1px solid rgba(229,62,62,0.3)',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#fc8181',marginBottom:14}}, error),
+        success && React.createElement('div', {style:{background:'rgba(72,187,120,0.1)',border:'1px solid rgba(72,187,120,0.3)',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#68d391',marginBottom:14}}, success),
+
+        React.createElement('button', {
+          type:'submit', disabled:loading,
+          style:{width:'100%',background:loading?'#333':'#e53e3e',color:'#fff',border:'none',borderRadius:8,padding:'12px',fontSize:15,fontWeight:700,cursor:loading?'not-allowed':'pointer',fontFamily:'Inter,sans-serif',transition:'opacity .15s'}
+        }, loading ? 'Cargando...' : (mode === 'login' ? 'Ingresar' : 'Crear cuenta'))
+      ),
+
+      // Switch mode
+      React.createElement('div', {style:{textAlign:'center',marginTop:20,fontSize:13,color:'rgba(255,255,255,0.4)'}},
+        mode === 'login'
+          ? React.createElement('span', null, 'No tienes cuenta? ', React.createElement('span', {onClick:()=>{setMode('register');setError('');}, style:{color:'#e53e3e',cursor:'pointer',fontWeight:600}}, 'Registrate'))
+          : React.createElement('span', null, 'Ya tienes cuenta? ', React.createElement('span', {onClick:()=>{setMode('login');setError('');}, style:{color:'#e53e3e',cursor:'pointer',fontWeight:600}}, 'Inicia sesion'))
+      )
+    )
+  );
+}
+
+
+
 'use strict';
 const {createElement:h, useState, useEffect, useRef, useCallback, Fragment} = React;
 
@@ -1587,7 +1833,7 @@ function PagePerfil({state, setState, setPage}) {
         ),
         h('div', {style:{flex:1,minWidth:200}},
           h('div', {style:{fontSize:22,fontWeight:800,marginBottom:4}}, user.name),
-          h('div', {style:{fontSize:13,color:'var(--t3)',marginBottom:8}}, user.email||'usuario@email.com'),
+          h('div', {style:{fontSize:13,color:'var(--t3)',marginBottom:8}}, (window._supaUser && window._supaUser.email) || user.email || 'usuario@email.com'),
           h('div', {style:{display:'flex',alignItems:'center',gap:6,marginBottom:8}},
             h('span', {style:{fontSize:14,fontWeight:600,color:'var(--green)'}}, levelName),
             h('span', {style:{fontSize:12,color:'var(--t3)'}}, '— Iniciando la jornada')
@@ -1693,6 +1939,12 @@ function PageConfig({state, setState, darkMode, setDarkMode, handleNotif}) {
       localStorage.removeItem(SK); location.reload();
     }
   };
+  const signOut = async () => {
+    if (confirm('Cerrar sesion?')) {
+      if (window._elitelabSignOut) await window._elitelabSignOut();
+      else location.reload();
+    }
+  };
 
   return h(Fragment, null,
     h('div', {style:{fontSize:22,fontWeight:800,marginBottom:4}}, 'Configuracion'),
@@ -1771,7 +2023,7 @@ function PageConfig({state, setState, darkMode, setDarkMode, handleNotif}) {
     ),
 
     h('div', {style:{textAlign:'center',padding:'10px'}},
-      h('button', {onClick:reset, style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:13,fontFamily:'Inter'}}, '→ Cerrar sesion')
+      h('button', {onClick:signOut, style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:13,fontFamily:'Inter'}}, '→ Cerrar sesion')
     )
   );
 }
@@ -1938,6 +2190,60 @@ try { window.addEventListener('appinstalled',()=>{window._dip=null;window._insta
 
 // ── MOUNT ──────────────────────────────────────────────────────────────
 ReactDOM.createRoot(document.getElementById('app')).render(React.createElement(App));
+
+
+
+// ── AUTHENTICATED APP WRAPPER ─────────────────────────────────────────
+const _OriginalApp = App;
+
+function App() {
+  const [authState, setAuthState] = React.useState('loading'); // loading | auth | app
+  const [supaUser, setSupaUser] = React.useState(null);
+
+  React.useEffect(() => {
+    // Try to restore session
+    supa.auth.restoreSession().then(ok => {
+      if (ok) {
+        setSupaUser(supa.auth.getUser());
+        setAuthState('app');
+      } else {
+        setAuthState('auth');
+      }
+    });
+  }, []);
+
+  const handleAuth = (user) => {
+    setSupaUser(user);
+    setAuthState('app');
+  };
+
+  const handleSignOut = async () => {
+    await supa.auth.signOut();
+    setSupaUser(null);
+    setAuthState('auth');
+    // Clear localStorage app data
+    localStorage.removeItem('elitelab_v4');
+  };
+
+  if (authState === 'loading') {
+    return React.createElement('div', {
+      style:{minHeight:'100vh',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif',flexDirection:'column',gap:16}
+    },
+      React.createElement('div', {style:{width:54,height:54,borderRadius:12,background:'#e53e3e',display:'flex',alignItems:'center',justifyContent:'center',fontSize:30,fontStyle:'italic',fontWeight:800,fontFamily:'Georgia,serif',color:'#fff'}}, 'E'),
+      React.createElement('div', {style:{color:'rgba(255,255,255,0.4)',fontSize:14}}, 'Cargando EliteLab...')
+    );
+  }
+
+  if (authState === 'auth') {
+    return React.createElement(AuthPage, {onAuth: handleAuth});
+  }
+
+  // Inject signOut into the app via a global
+  window._elitelabSignOut = handleSignOut;
+  window._supaUser = supaUser;
+
+  return React.createElement(_OriginalApp, null);
+}
 </script>
 </body>
 </html>
