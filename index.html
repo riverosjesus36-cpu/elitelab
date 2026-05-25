@@ -2212,15 +2212,20 @@ function App() {
   const [supaUser, setSupaUser] = React.useState(null);
 
   React.useEffect(() => {
-    // Try to restore session
-    supa.auth.restoreSession().then(ok => {
-      if (ok) {
-        setSupaUser(supa.auth.getUser());
+    // Check session from localStorage instantly - no network call
+    const token = localStorage.getItem('supa_token');
+    const userStr = localStorage.getItem('supa_user');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        supa.auth._token = token;
+        supa.auth._user = user;
+        setSupaUser(user);
         setAuthState('app');
-      } else {
-        setAuthState('auth');
-      }
-    });
+        return;
+      } catch(e) {}
+    }
+    setAuthState('auth');
   }, []);
 
   const handleAuth = (user) => {
