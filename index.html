@@ -1773,10 +1773,186 @@ function PagePlan({state, setState}) {
 }
 
 // ── ENTRENAMIENTO ─────────────────────────────────────────────────────
-function PageEntrenamiento({state}) {
+const EJERCICIOS_DB = {
+  pecho: ['Press Banca','Press Inclinado','Aperturas','Fondos','Pullover','Press Mancuernas'],
+  espalda: ['Dominadas','Remo con Barra','Remo con Mancuerna','Jalon al Pecho','Peso Muerto','Pullover'],
+  hombros: ['Press Militar','Elevaciones Laterales','Elevaciones Frontales','Pajaros','Face Pull'],
+  biceps: ['Curl con Barra','Curl con Mancuerna','Curl Martillo','Curl Concentrado','Curl en Polea'],
+  triceps: ['Fondos','Press Frances','Jalon en Polea','Patada de Triceps','Rompecraneos'],
+  piernas: ['Sentadilla','Prensa','Zancadas','Extension de Cuadriceps','Curl de Femoral','Pantorrillas'],
+  abdomen: ['Crunch','Plancha','Rueda Abdominal','Elevacion de Piernas','Russian Twist','Bicicleta'],
+  cardio: ['Correr','Bicicleta','Saltar Soga','Burpees','Mountain Climbers','Remo'],
+  funcional: ['Burpees','Kettlebell Swing','Box Jump','Battle Ropes','TRX Row','Slam Ball'],
+};
+
+const MUSCULOS_MAP = {
+  'Press Banca':'pecho','Press Inclinado':'pecho','Aperturas':'pecho','Fondos':'pecho',
+  'Dominadas':'espalda','Remo con Barra':'espalda','Peso Muerto':'espalda','Jalon al Pecho':'espalda',
+  'Press Militar':'hombros','Elevaciones Laterales':'hombros','Elevaciones Frontales':'hombros',
+  'Curl con Barra':'biceps','Curl con Mancuerna':'biceps','Curl Martillo':'biceps',
+  'Press Frances':'triceps','Jalon en Polea':'triceps','Fondos':'triceps',
+  'Sentadilla':'piernas','Prensa':'piernas','Zancadas':'piernas','Curl de Femoral':'piernas',
+  'Crunch':'abdomen','Plancha':'abdomen','Elevacion de Piernas':'abdomen',
+  'Correr':'cardio','Bicicleta':'cardio','Burpees':'funcional',
+};
+
+const MUSCULO_SVG_PARTS = {
+  pecho:    {front:['M 95 180 Q 110 175 120 195 Q 110 210 95 205 Z','M 155 180 Q 140 175 130 195 Q 140 210 155 205 Z'], back:[]},
+  espalda:  {front:[], back:['M 88 175 Q 95 170 105 185 Q 100 200 88 195 Z','M 162 175 Q 155 170 145 185 Q 150 200 162 195 Z']},
+  hombros:  {front:['M 82 165 Q 90 158 95 170 Q 88 178 80 175 Z','M 168 165 Q 160 158 155 170 Q 162 178 170 175 Z'], back:['M 82 165 Q 90 158 95 170 Q 88 178 80 175 Z','M 168 165 Q 160 158 155 170 Q 162 178 170 175 Z']},
+  biceps:   {front:['M 80 180 Q 87 175 90 195 Q 83 200 78 195 Z','M 170 180 Q 163 175 160 195 Q 167 200 172 195 Z'], back:[]},
+  triceps:  {front:[], back:['M 80 180 Q 87 175 90 195 Q 83 200 78 195 Z','M 170 180 Q 163 175 160 195 Q 167 200 172 195 Z']},
+  piernas:  {front:['M 100 290 Q 115 285 118 330 Q 108 335 98 330 Z','M 150 290 Q 135 285 132 330 Q 142 335 152 330 Z'], back:['M 100 290 Q 115 285 118 330 Q 108 335 98 330 Z','M 150 290 Q 135 285 132 330 Q 142 335 152 330 Z']},
+  abdomen:  {front:['M 108 215 Q 122 212 122 250 Q 108 252 108 250 Z'], back:[]},
+  cardio:   {front:['M 95 180 Q 155 180 155 250 Q 95 250 95 180 Z'], back:[]},
+  funcional:{front:['M 95 170 Q 155 170 155 260 Q 95 260 95 170 Z'], back:[]},
+};
+
+function MapaMuscular({entrenamientos}) {
+  const muscActivos = {};
+  const hoy = new Date();
+  const hace7 = new Date(hoy); hace7.setDate(hoy.getDate()-7);
+  
+  (entrenamientos||[]).forEach(e => {
+    const d = new Date(e.fecha);
+    if (d >= hace7) {
+      (e.ejercicios||[]).forEach(ej => {
+        const m = MUSCULOS_MAP[ej.nombre];
+        if (m) muscActivos[m] = (muscActivos[m]||0) + (ej.series||1);
+      });
+    }
+  });
+
+  const getColor = (musc) => {
+    const v = muscActivos[musc]||0;
+    if (v===0) return 'rgba(255,255,255,0.08)';
+    if (v<=2) return 'rgba(229,62,62,0.4)';
+    return 'rgba(229,62,62,0.85)';
+  };
+
+  const BodySVG = ({view}) => {
+    const parts = Object.entries(MUSCULO_SVG_PARTS);
+    return h('svg', {width:250, height:420, viewBox:'0 0 250 420'},
+      // Cabeza
+      h('ellipse', {cx:125, cy:100, rx:28, ry:32, fill:'rgba(255,255,255,0.12)', stroke:'rgba(255,255,255,0.2)', strokeWidth:1.5}),
+      // Cuello
+      h('rect', {x:116, y:130, width:18, height:20, rx:4, fill:'rgba(255,255,255,0.1)'}),
+      // Torso
+      h('path', {d:'M 90 150 Q 125 145 160 150 L 165 260 Q 125 265 85 260 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.15)', strokeWidth:1.5}),
+      // Brazos
+      h('path', {d:'M 90 155 Q 75 170 72 220 Q 68 235 74 240 Q 80 220 85 200 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
+      h('path', {d:'M 160 155 Q 175 170 178 220 Q 182 235 176 240 Q 170 220 165 200 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
+      // Antebrazos
+      h('path', {d:'M 74 240 Q 70 270 72 290 Q 76 295 80 290 Q 82 270 80 240 Z', fill:'rgba(255,255,255,0.07)'}),
+      h('path', {d:'M 176 240 Q 180 270 178 290 Q 174 295 170 290 Q 168 270 170 240 Z', fill:'rgba(255,255,255,0.07)'}),
+      // Piernas
+      h('path', {d:'M 95 260 Q 105 265 112 340 Q 108 345 100 340 Q 95 270 90 260 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
+      h('path', {d:'M 155 260 Q 145 265 138 340 Q 142 345 150 340 Q 155 270 160 260 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
+      // Pantorrillas
+      h('path', {d:'M 100 340 Q 106 345 110 385 Q 106 390 100 385 Q 97 360 97 340 Z', fill:'rgba(255,255,255,0.07)'}),
+      h('path', {d:'M 150 340 Q 144 345 140 385 Q 144 390 150 385 Q 153 360 153 340 Z', fill:'rgba(255,255,255,0.07)'}),
+      // Pies
+      h('ellipse', {cx:104, cy:392, rx:14, ry:8, fill:'rgba(255,255,255,0.1)'}),
+      h('ellipse', {cx:146, cy:392, rx:14, ry:8, fill:'rgba(255,255,255,0.1)'}),
+      // Musculos activos
+      ...parts.map(([musc, paths]) => {
+        const viewPaths = view==='front' ? paths.front : paths.back;
+        return viewPaths.map((d,i) => h('path', {key:musc+i, d, fill:getColor(musc), stroke:muscActivos[musc]?'rgba(229,62,62,0.6)':'none', strokeWidth:1}));
+      }).flat()
+    );
+  };
+
+  return h('div', null,
+    h('div', {style:{display:'flex',justifyContent:'center',gap:40}},
+      h('div', {style:{textAlign:'center'}},
+        h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}, 'ANTERIOR'),
+        h(BodySVG, {view:'front'})
+      ),
+      h('div', {style:{textAlign:'center'}},
+        h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}, 'POSTERIOR'),
+        h(BodySVG, {view:'back'})
+      )
+    ),
+    h('div', {style:{display:'flex',gap:16,justifyContent:'center',marginTop:12}},
+      [{c:'rgba(255,255,255,0.08)',l:'Inactivo'},{c:'rgba(229,62,62,0.4)',l:'Leve'},{c:'rgba(229,62,62,0.85)',l:'Intenso'}].map(({c,l}) =>
+        h('div', {key:l, style:{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--t2)'}},
+          h('div', {style:{width:12,height:12,borderRadius:3,background:c,border:'1px solid rgba(255,255,255,0.15)'}}),
+          l
+        )
+      )
+    )
+  );
+}
+
+function PageEntrenamiento({state, setState, showToast}) {
+  const [tab, setTab] = useState('dashboard');
+  const [showNewRutina, setShowNewRutina] = useState(false);
+  const [showIniciar, setShowIniciar] = useState(null);
+  const [rutinaName, setRutinaName] = useState('');
+  const [rutinaEjercicios, setRutinaEjercicios] = useState([]);
+  const [catSel, setCatSel] = useState('pecho');
+  const [timerActive, setTimerActive] = useState(false);
+  const [timerSecs, setTimerSecs] = useState(0);
+  const [restTimer, setRestTimer] = useState(null);
+  const [restSecs, setRestSecs] = useState(0);
+  const timerRef = useRef(null);
+  const restRef = useRef(null);
+  const [logSets, setLogSets] = useState({});
+
+  const rutinas = state.rutinas || [];
+  const entrenamientos = state.entrenamientos || [];
   const now = new Date();
   const mon = new Date(now); mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));
-  const wk = Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return{day:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'][i],date:d.getDate(),isToday:d.toDateString()===now.toDateString()};});
+  const wk = Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return{day:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'][i],date:d.getDate(),isToday:d.toDateString()===now.toDateString(),dateStr:d.toDateString()};});
+  const semanaEnt = wk.map(d => entrenamientos.some(e => new Date(e.fecha).toDateString()===d.dateStr));
+  const totalVol = entrenamientos.slice(-7).reduce((a,e)=>a+(e.ejercicios||[]).reduce((b,ej)=>b+(ej.series||0)*(ej.reps||0)*(ej.peso||0),0),0);
+  const score = Math.min(100, entrenamientos.filter(e=>{const d=new Date(e.fecha);const h=new Date();return d>new Date(h-7*86400000);}).length * 15);
+
+  // Timer entrenamiento
+  useEffect(()=>{
+    if(timerActive){ timerRef.current=setInterval(()=>setTimerSecs(s=>s+1),1000); }
+    else clearInterval(timerRef.current);
+    return ()=>clearInterval(timerRef.current);
+  },[timerActive]);
+
+  // Timer descanso
+  useEffect(()=>{
+    if(restTimer!==null && restSecs>0){
+      restRef.current=setInterval(()=>setRestSecs(s=>{if(s<=1){clearInterval(restRef.current);setRestTimer(null);showToast({icon:'💪',title:'Descanso terminado',sub:'Siguiente serie!'});return 0;}return s-1;}),1000);
+    }
+    return ()=>clearInterval(restRef.current);
+  },[restTimer]);
+
+  const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+  const addEjercicio = (nombre) => {
+    setRutinaEjercicios(prev => [...prev, {id:Date.now(), nombre, series:3, reps:12, peso:0, musculo:MUSCULOS_MAP[nombre]||'funcional'}]);
+  };
+
+  const saveRutina = () => {
+    if (!rutinaName.trim() || rutinaEjercicios.length===0) return;
+    setState(p=>({...p, rutinas:[...(p.rutinas||[]), {id:Date.now(), nombre:rutinaName, ejercicios:rutinaEjercicios, fecha:new Date().toLocaleDateString()}]}));
+    setRutinaName(''); setRutinaEjercicios([]); setShowNewRutina(false);
+  };
+
+  const finalizarEntrenamiento = (rutina) => {
+    const ejerciciosLog = (rutina.ejercicios||[]).map(ej => ({
+      ...ej,
+      series: parseInt(logSets[ej.id+'_series']||ej.series),
+      reps: parseInt(logSets[ej.id+'_reps']||ej.reps),
+      peso: parseFloat(logSets[ej.id+'_peso']||ej.peso),
+    }));
+    const vol = ejerciciosLog.reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0);
+    setState(p=>({
+      ...p,
+      entrenamientos:[...(p.entrenamientos||[]),{id:Date.now(),rutinaNombre:rutina.nombre,ejercicios:ejerciciosLog,duracion:timerSecs,fecha:new Date().toISOString(),volumen:vol}],
+      scores:{...p.scores, fisico:Math.min(100,(p.scores.fisico||0)+15)}
+    }));
+    setTimerActive(false); setTimerSecs(0); setShowIniciar(null); setLogSets({});
+    showToast({icon:'💪',title:'+15 Score Fisico!',sub:'Entrenamiento completado: '+rutina.nombre});
+  };
+
+  const delRutina = id => setState(p=>({...p, rutinas:(p.rutinas||[]).filter(r=>r.id!==id)}));
 
   return h(Fragment, null,
     h('div', {style:{marginBottom:20}},
@@ -1786,37 +1962,219 @@ function PageEntrenamiento({state}) {
       ),
       h('div', {style:{fontSize:13,color:'var(--t3)',marginTop:3}}, 'Entrenamiento y rendimiento')
     ),
-    h('div', {className:'g3', style:{marginBottom:18}},
-      h('div', {className:'card2'},
-        h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'SCORE FISICO'),
-        h('div', {style:{fontSize:28,fontWeight:800}}, (state.scores.fisico||0)+'/100'),
-        h('div', {style:{fontSize:12,color:'var(--t3)',marginTop:3}}, '0 entrenamientos esta semana')
-      ),
-      h('div', {className:'card2'},
-        h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'PESO ACTUAL'),
-        h('div', {style:{fontSize:28,fontWeight:800,color:'var(--t3)'}}, '—'),
-        h('button', {className:'btn btn-ghost btn-sm', style:{marginTop:8}}, '+ Registrar peso')
-      ),
-      h('div', {className:'card2'},
-        h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'VOLUMEN TOTAL'),
-        h('div', {style:{fontSize:28,fontWeight:800,color:'var(--red)'}}, '0 KG'),
-        h('div', {style:{fontSize:12,color:'var(--t3)',marginTop:3}}, 'Ultimos 7 dias')
+
+    // Tabs
+    h('div', {style:{display:'flex',background:'var(--bg3)',borderRadius:10,padding:4,marginBottom:20,gap:4}},
+      ['dashboard','rutinas','estadisticas'].map(t =>
+        h('button', {key:t, onClick:()=>setTab(t), style:{flex:1,padding:'9px',borderRadius:8,border:'none',background:tab===t?'var(--red)':'transparent',color:tab===t?'#fff':'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'Inter',textTransform:'capitalize'}}, t.charAt(0).toUpperCase()+t.slice(1))
       )
     ),
-    h('div', {className:'card2', style:{marginBottom:18}},
-      h('div', {style:{fontSize:11,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:14}}, 'SEMANA'),
-      h('div', {style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:8}},
-        wk.map((d,i) =>
-          h('div', {key:i, style:{textAlign:'center'}},
-            h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:6}}, d.day),
-            h('div', {style:{width:40,height:40,borderRadius:8,background:d.isToday?'var(--red)':'var(--bg4)',border:'1px solid '+(d.isToday?'var(--red)':'var(--bor)'),display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:14,fontWeight:d.isToday?700:400}}, d.date)
+
+    // DASHBOARD TAB
+    tab==='dashboard' && h(Fragment, null,
+      h('div', {style:{background:'linear-gradient(135deg,var(--red),#c53030)',borderRadius:14,padding:'20px 24px',marginBottom:16,color:'#fff'}},
+        h('div', {className:'g3', style:{gap:20}},
+          h('div', null,
+            h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,opacity:.8,marginBottom:6}}, 'SCORE FISICO'),
+            h('div', {style:{fontSize:42,fontWeight:800}}, score, h('span', {style:{fontSize:20,opacity:.7}}, '/100')),
+            h('div', {style:{fontSize:12,opacity:.7,marginTop:3}}, entrenamientos.filter(e=>{const d=new Date(e.fecha);return d>new Date(Date.now()-7*86400000);}).length+' entrenamientos esta semana')
+          ),
+          h('div', null,
+            h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,opacity:.8,marginBottom:6}}, 'PESO ACTUAL'),
+            h('div', {style:{fontSize:42,fontWeight:800}}, state.pesoActual||'—'),
+            h('button', {onClick:()=>{const p=prompt('Peso actual (kg):');if(p)setState(prev=>({...prev,pesoActual:p}));}, style:{marginTop:6,background:'rgba(255,255,255,0.2)',border:'none',color:'#fff',padding:'5px 12px',borderRadius:20,fontSize:12,cursor:'pointer',fontFamily:'Inter'}}, '+ Registrar')
+          ),
+          h('div', null,
+            h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,opacity:.8,marginBottom:6}}, 'VOLUMEN TOTAL'),
+            h('div', {style:{fontSize:42,fontWeight:800}}, totalVol>0?totalVol.toFixed(0):0, h('span', {style:{fontSize:20,opacity:.7}}, ' KG')),
+            h('div', {style:{fontSize:12,opacity:.7,marginTop:3}}, 'Ultimos 7 dias')
+          )
+        )
+      ),
+
+      // Semana
+      h('div', {className:'card2', style:{marginBottom:16}},
+        h('div', {style:{fontSize:11,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:14}}, 'SEMANA'),
+        h('div', {style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:8}},
+          wk.map((d,i) =>
+            h('div', {key:i, style:{textAlign:'center'}},
+              h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:6}}, d.day),
+              h('div', {style:{width:40,height:40,borderRadius:8,background:semanaEnt[i]?'var(--green)':d.isToday?'var(--red)':'var(--bg4)',border:'1px solid '+(d.isToday&&!semanaEnt[i]?'var(--red)':'transparent'),display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:13,fontWeight:d.isToday?700:400,color:semanaEnt[i]||d.isToday?'#fff':'var(--t2)'}}, semanaEnt[i]?'✓':d.date)
+            )
+          )
+        )
+      ),
+
+      // Mapa muscular
+      h('div', {className:'card2'},
+        h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},
+          h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)'}}, 'Mapa Muscular'),
+          h('div', {style:{fontSize:12,color:'var(--t3)'}}, 'Ultimos 7 dias')
+        ),
+        h('div', {style:{fontSize:28,fontWeight:800,textAlign:'center',marginBottom:8}},
+          totalVol>0?totalVol.toFixed(0):0, h('span', {style:{fontSize:16,color:'var(--t3)',marginLeft:4}}, 'KG')
+        ),
+        h(MapaMuscular, {entrenamientos})
+      )
+    ),
+
+    // RUTINAS TAB
+    tab==='rutinas' && h(Fragment, null,
+      h('div', {style:{display:'flex',justifyContent:'flex-end',marginBottom:14}},
+        h('button', {className:'btn btn-r', onClick:()=>setShowNewRutina(true)}, '+ Nueva Rutina')
+      ),
+      rutinas.length===0
+        ? h('div', {className:'empty'},
+            h('div', {style:{fontSize:36,marginBottom:12}}, '🏋'),
+            h('div', {style:{fontSize:15,fontWeight:600,color:'var(--t2)',marginBottom:8}}, 'Sin rutinas todavia'),
+            h('button', {className:'btn btn-r', onClick:()=>setShowNewRutina(true)}, '+ Crear primera rutina')
+          )
+        : rutinas.map(r =>
+            h('div', {key:r.id, style:{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:10,padding:'14px 16px',marginBottom:10,display:'flex',alignItems:'center',gap:12}},
+              h('div', {style:{flex:1}},
+                h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:3}}, r.nombre),
+                h('div', {style:{fontSize:12,color:'var(--t3)'}}, (r.ejercicios||[]).length+' ejercicios · Creada el '+r.fecha)
+              ),
+              h('button', {className:'del', onClick:()=>delRutina(r.id)}, '🗑'),
+              h('button', {
+                onClick:()=>{setShowIniciar(r);setTimerActive(true);setTimerSecs(0);},
+                style:{background:'var(--red)',color:'#fff',border:'none',padding:'8px 18px',borderRadius:20,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'Inter',display:'flex',alignItems:'center',gap:6}
+              }, '▶ Iniciar')
+            )
+          ),
+
+      // Modal nueva rutina
+      showNewRutina && h(Modal, {title:'Nueva Rutina', onClose:()=>setShowNewRutina(false)},
+        h(FG, {label:'NOMBRE DE LA RUTINA'},
+          h('input', {className:'inp', placeholder:'ej. Empuje A, Piernas, Full Body...', value:rutinaName, onChange:e=>setRutinaName(e.target.value), autoFocus:true})
+        ),
+        h(FG, {label:'CATEGORIA DE EJERCICIOS'},
+          h('div', {style:{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}},
+            Object.keys(EJERCICIOS_DB).map(cat =>
+              h('button', {key:cat, onClick:()=>setCatSel(cat), style:{padding:'5px 12px',borderRadius:20,border:'1px solid '+(catSel===cat?'var(--red)':'var(--bor)'),background:catSel===cat?'var(--red)':'transparent',color:catSel===cat?'#fff':'var(--t2)',fontSize:12,cursor:'pointer',fontFamily:'Inter',textTransform:'capitalize'}}, cat)
+            )
+          ),
+          h('div', {style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}},
+            EJERCICIOS_DB[catSel].map(ej =>
+              h('button', {key:ej, onClick:()=>addEjercicio(ej), style:{background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:8,padding:'8px 10px',fontSize:12,color:'var(--t2)',cursor:'pointer',fontFamily:'Inter',textAlign:'left',transition:'all .12s'}}, '+ '+ej)
+            )
+          )
+        ),
+        rutinaEjercicios.length>0 && h('div', {style:{marginTop:12}},
+          h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}, 'EJERCICIOS AGREGADOS'),
+          rutinaEjercicios.map((ej,i) =>
+            h('div', {key:ej.id, style:{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'var(--bg4)',borderRadius:8,marginBottom:6}},
+              h('span', {style:{flex:1,fontSize:13,fontWeight:500}}, ej.nombre),
+              h('input', {type:'number',min:1,max:10,value:ej.series,onChange:e=>setRutinaEjercicios(prev=>prev.map((x,j)=>j===i?{...x,series:parseInt(e.target.value)}:x)),style:{width:42,background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:6,padding:'4px 6px',color:'#fff',fontSize:12,textAlign:'center'}, placeholder:'S'}),
+              h('span', {style:{fontSize:11,color:'var(--t3)'}}, 'x'),
+              h('input', {type:'number',min:1,max:50,value:ej.reps,onChange:e=>setRutinaEjercicios(prev=>prev.map((x,j)=>j===i?{...x,reps:parseInt(e.target.value)}:x)),style:{width:42,background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:6,padding:'4px 6px',color:'#fff',fontSize:12,textAlign:'center'}, placeholder:'R'}),
+              h('button', {onClick:()=>setRutinaEjercicios(prev=>prev.filter((_,j)=>j!==i)), style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:14}}, '✕')
+            )
+          )
+        ),
+        h('div', {style:{display:'flex',gap:10,justifyContent:'flex-end',marginTop:12}},
+          h('button', {className:'btn btn-ghost', onClick:()=>setShowNewRutina(false)}, 'Cancelar'),
+          h('button', {className:'btn btn-r', onClick:saveRutina, disabled:!rutinaName||rutinaEjercicios.length===0}, 'Guardar Rutina')
+        )
+      ),
+
+      // Modal iniciar entrenamiento
+      showIniciar && h('div', {className:'ov', onClick:e=>e.target===e.currentTarget&&null},
+        h('div', {className:'mod', style:{width:520}},
+          h('div', {style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}},
+            h('div', {style:{fontSize:16,fontWeight:700}}, showIniciar.nombre),
+            h('div', {style:{fontSize:32,fontWeight:800,color:'var(--red)',fontFamily:'monospace'}}, fmtTime(timerSecs))
+          ),
+          h('div', {style:{background:'var(--bg3)',borderRadius:10,padding:'12px',marginBottom:16}},
+            h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:10,textTransform:'uppercase',letterSpacing:1}}, 'REGISTRAR SETS'),
+            (showIniciar.ejercicios||[]).map(ej =>
+              h('div', {key:ej.id, style:{marginBottom:14,paddingBottom:14,borderBottom:'1px solid var(--bor)'}},
+                h('div', {style:{fontSize:14,fontWeight:600,marginBottom:8,color:'var(--t2)'}}, ej.nombre),
+                h('div', {style:{display:'flex',gap:10,alignItems:'center'}},
+                  h('div', {style:{flex:1}},
+                    h('div', {style:{fontSize:10,color:'var(--t3)',marginBottom:4}}, 'SERIES'),
+                    h('input', {type:'number',min:1,max:10,defaultValue:ej.series,onChange:e=>setLogSets(p=>({...p,[ej.id+'_series']:e.target.value})),className:'inp',style:{padding:'6px 10px',textAlign:'center'}})
+                  ),
+                  h('div', {style:{flex:1}},
+                    h('div', {style:{fontSize:10,color:'var(--t3)',marginBottom:4}}, 'REPS'),
+                    h('input', {type:'number',min:1,max:50,defaultValue:ej.reps,onChange:e=>setLogSets(p=>({...p,[ej.id+'_reps']:e.target.value})),className:'inp',style:{padding:'6px 10px',textAlign:'center'}})
+                  ),
+                  h('div', {style:{flex:1}},
+                    h('div', {style:{fontSize:10,color:'var(--t3)',marginBottom:4}}, 'PESO (KG)'),
+                    h('input', {type:'number',min:0,step:2.5,defaultValue:ej.peso,onChange:e=>setLogSets(p=>({...p,[ej.id+'_peso']:e.target.value})),className:'inp',style:{padding:'6px 10px',textAlign:'center'}})
+                  )
+                )
+              )
+            )
+          ),
+          restTimer!==null && h('div', {style:{background:'rgba(237,137,54,0.1)',border:'1px solid rgba(237,137,54,0.3)',borderRadius:8,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',justifyContent:'space-between'}},
+            h('span', {style:{fontSize:14,color:'var(--orange)',fontWeight:600}}, '⏱ Descanso'),
+            h('span', {style:{fontSize:28,fontWeight:800,fontFamily:'monospace',color:'var(--orange)'}}, fmtTime(restSecs)),
+            h('button', {onClick:()=>{clearInterval(restRef.current);setRestTimer(null);setRestSecs(0);}, style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:14}}, 'Saltar')
+          ),
+          h('div', {style:{display:'flex',gap:8}},
+            h('button', {onClick:()=>{setRestTimer(Date.now());setRestSecs(60);}, className:'btn btn-ghost', style:{flex:1,justifyContent:'center'}}, '⏱ Descanso 60s'),
+            h('button', {onClick:()=>{setRestTimer(Date.now());setRestSecs(90);}, className:'btn btn-ghost', style:{flex:1,justifyContent:'center'}}, '⏱ Descanso 90s')
+          ),
+          h('div', {style:{display:'flex',gap:10,marginTop:12}},
+            h('button', {onClick:()=>{setShowIniciar(null);setTimerActive(false);setTimerSecs(0);}, className:'btn btn-ghost', style:{flex:1,justifyContent:'center'}}, 'Cancelar'),
+            h('button', {onClick:()=>finalizarEntrenamiento(showIniciar), className:'btn btn-r', style:{flex:2,justifyContent:'center',fontSize:15}}, '✓ Finalizar Entrenamiento')
           )
         )
       )
     ),
-    h('div', {className:'card2'},
-      h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:14}}, 'Mapa Muscular'),
-      h('div', {style:{textAlign:'center',color:'var(--t3)',padding:'20px'}}, '0 KG — Completa entrenamientos para ver el mapa muscular')
+
+    // ESTADISTICAS TAB
+    tab==='estadisticas' && h(Fragment, null,
+      h('div', {className:'g2', style:{marginBottom:16}},
+        h('div', {className:'card2'},
+          h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'TOTAL ENTRENAMIENTOS'),
+          h('div', {style:{fontSize:42,fontWeight:800}}, entrenamientos.length)
+        ),
+        h('div', {className:'card2'},
+          h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'VOLUMEN TOTAL'),
+          h('div', {style:{fontSize:42,fontWeight:800,color:'var(--red)'}},
+            entrenamientos.reduce((a,e)=>a+(e.ejercicios||[]).reduce((b,ej)=>b+ej.series*ej.reps*ej.peso,0),0).toFixed(0),
+            h('span', {style:{fontSize:18,color:'var(--t3)',marginLeft:4}}, 'KG')
+          )
+        )
+      ),
+      h('div', {className:'card2', style:{marginBottom:16}},
+        h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:14}}, 'Evolucion de Volumen'),
+        entrenamientos.length===0
+          ? h('div', {className:'empty'}, 'Sin entrenamientos registrados aun')
+          : h('div', null,
+              entrenamientos.slice(-10).map((e,i) => {
+                const vol = (e.ejercicios||[]).reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0);
+                const maxVol = Math.max(...entrenamientos.map(x=>(x.ejercicios||[]).reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0)),1);
+                return h('div', {key:e.id, style:{display:'flex',alignItems:'center',gap:10,marginBottom:8}},
+                  h('div', {style:{fontSize:11,color:'var(--t3)',width:70,flexShrink:0}}, new Date(e.fecha).toLocaleDateString('es',{day:'2-digit',month:'short'})),
+                  h('div', {style:{flex:1,height:24,background:'var(--bg4)',borderRadius:4,overflow:'hidden'}},
+                    h('div', {style:{height:'100%',width:(vol/maxVol*100)+'%',background:'var(--red)',borderRadius:4,display:'flex',alignItems:'center',paddingLeft:8,fontSize:11,fontWeight:600,color:'#fff',transition:'width .5s'}}, vol>0?vol.toFixed(0)+' KG':'')
+                  ),
+                  h('div', {style:{fontSize:11,color:'var(--t3)',width:80,flexShrink:0,textAlign:'right'}}, e.rutinaNombre)
+                );
+              })
+            )
+      ),
+      h('div', {className:'card2'},
+        h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:14}}, 'Historial de Entrenamientos'),
+        entrenamientos.length===0
+          ? h('div', {className:'empty'}, 'Sin entrenamientos registrados aun')
+          : entrenamientos.slice().reverse().slice(0,10).map(e =>
+              h('div', {key:e.id, style:{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid var(--bor)'}},
+                h('div', {style:{width:42,height:42,borderRadius:10,background:'rgba(229,62,62,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}, '💪'),
+                h('div', {style:{flex:1}},
+                  h('div', {style:{fontSize:13,fontWeight:600}}, e.rutinaNombre),
+                  h('div', {style:{fontSize:11,color:'var(--t3)',marginTop:2}}, new Date(e.fecha).toLocaleDateString('es',{weekday:'long',day:'numeric',month:'short'})+' · '+fmtTime(e.duracion||0))
+                ),
+                h('div', {style:{textAlign:'right'}},
+                  h('div', {style:{fontSize:14,fontWeight:700,color:'var(--red)'}}, ((e.ejercicios||[]).reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0)).toFixed(0)+' KG'),
+                  h('div', {style:{fontSize:11,color:'var(--t3)'}}, (e.ejercicios||[]).length+' ejercicios')
+                )
+              )
+            )
+      )
     )
   );
 }
