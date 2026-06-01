@@ -23,6 +23,7 @@ body{font-family:'Inter',sans-serif;background:#0a0a0a;color:#fff;min-height:100
 .badge{margin-left:auto;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px}
 .btop{background:var(--red);color:#fff}
 .bpronto{background:#7c3aed;color:#fff}
+.bnew{background:#e53e3e;color:#fff}
 .sb-user{margin-top:auto;padding:11px 14px;border-top:1px solid var(--bor);display:flex;align-items:center;gap:9px;cursor:pointer;min-width:210px}
 .av{width:28px;height:28px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
 .main{margin-left:210px;flex:1;display:flex;flex-direction:column;min-height:100vh;transition:margin-left .2s}
@@ -368,262 +369,7 @@ var d=null!=c&&c.hydratedSources||null,e=!1,f="",g=aj;null!==c&&void 0!==c&&(!0=
 function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmountComponentAtNode=function(a){if(!Vd(a))throw Error(m(40));return a._reactRootContainer?(yb(function(){Wd(null,null,a,!1,function(){a._reactRootContainer=null;a[Ja]=null})}),!0):!1};Q.unstable_batchedUpdates=Tf;Q.unstable_renderSubtreeIntoContainer=function(a,b,c,d){if(!Vd(c))throw Error(m(200));if(null==a||void 0===a._reactInternals)throw Error(m(38));return Wd(a,b,c,!1,d)};Q.version="18.3.1-next-f1338f8080-20240426"});
 })();
 </script>
-<script>// ── SUPABASE CONFIG ───────────────────────────────────────────────────
-const SUPA_URL = 'https://fgkgeamokgjoiotdcqjc.supabase.co';
-const SUPA_KEY = 'sb_publishable_Oh1_oBW_6wMnKtmlBxsH3A_QUhFqa5e';
-
-// Supabase client minimal (sin librería externa)
-const supa = {
-  _headers: {
-    'Content-Type': 'application/json',
-    'apikey': SUPA_KEY,
-    'Authorization': 'Bearer ' + SUPA_KEY
-  },
-  _authHeaders: function(token) {
-    return {...this._headers, 'Authorization': 'Bearer ' + token};
-  },
-
-  // AUTH
-  auth: {
-    _token: null,
-    _user: null,
-    _url: SUPA_URL + '/auth/v1',
-
-    async signUp(email, password) {
-      const r = await fetch(this._url + '/signup', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','apikey':SUPA_KEY},
-        body: JSON.stringify({email, password})
-      });
-      const d = await r.json();
-      if (d.access_token) { this._token = d.access_token; this._user = d.user; }
-      return d;
-    },
-
-    async signIn(email, password) {
-      const r = await fetch(this._url + '/token?grant_type=password', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json','apikey':SUPA_KEY},
-        body: JSON.stringify({email, password})
-      });
-      const d = await r.json();
-      if (d.access_token) {
-        this._token = d.access_token;
-        this._user = d.user;
-        localStorage.setItem('supa_token', d.access_token);
-        localStorage.setItem('supa_refresh', d.refresh_token || '');
-        localStorage.setItem('supa_user', JSON.stringify(d.user));
-      }
-      return d;
-    },
-
-    async signOut() {
-      if (this._token) {
-        await fetch(this._url + '/logout', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+this._token}
-        });
-      }
-      this._token = null; this._user = null;
-      localStorage.removeItem('supa_token');
-      localStorage.removeItem('supa_refresh');
-      localStorage.removeItem('supa_user');
-    },
-
-    async restoreSession() {
-      const token = localStorage.getItem('supa_token');
-      const user = localStorage.getItem('supa_user');
-      if (token && user) {
-        this._token = token;
-        this._user = JSON.parse(user);
-        // Verify token with timeout
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 4000);
-          const r = await fetch(this._url + '/user', {
-            headers: {'apikey':SUPA_KEY,'Authorization':'Bearer '+token},
-            signal: controller.signal
-          });
-          clearTimeout(timeout);
-          if (r.ok) {
-            const u = await r.json();
-            this._user = u;
-            return true;
-          }
-          // Token invalid - clear it
-          this._token = null; this._user = null;
-          localStorage.removeItem('supa_token');
-          localStorage.removeItem('supa_user');
-        } catch(e) {
-          // Network error or timeout - if we have token, trust it temporarily
-          if (token) return true;
-        }
-      }
-      return false;
-    },
-
-    getUser() { return this._user; },
-    getToken() { return this._token; }
-  },
-
-  // DB operations
-  async select(table, filter) {
-    const token = supa.auth.getToken();
-    if (!token) return [];
-    let url = SUPA_URL + '/rest/v1/' + table + '?select=*';
-    if (filter) url += '&' + filter;
-    const r = await fetch(url, {
-      headers: {...supa._headers, 'Authorization': 'Bearer ' + token}
-    });
-    if (!r.ok) return [];
-    return await r.json();
-  },
-
-  async insert(table, data) {
-    const token = supa.auth.getToken();
-    if (!token) return null;
-    const r = await fetch(SUPA_URL + '/rest/v1/' + table, {
-      method: 'POST',
-      headers: {...supa._headers, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation'},
-      body: JSON.stringify(data)
-    });
-    if (!r.ok) return null;
-    const d = await r.json();
-    return Array.isArray(d) ? d[0] : d;
-  },
-
-  async update(table, id_field, id_val, data) {
-    const token = supa.auth.getToken();
-    if (!token) return null;
-    const r = await fetch(SUPA_URL + '/rest/v1/' + table + '?' + id_field + '=eq.' + id_val, {
-      method: 'PATCH',
-      headers: {...supa._headers, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation'},
-      body: JSON.stringify(data)
-    });
-    if (!r.ok) return null;
-    return await r.json();
-  },
-
-  async delete(table, id_field, id_val) {
-    const token = supa.auth.getToken();
-    if (!token) return false;
-    const r = await fetch(SUPA_URL + '/rest/v1/' + table + '?' + id_field + '=eq.' + id_val, {
-      method: 'DELETE',
-      headers: {...supa._headers, 'Authorization': 'Bearer ' + token}
-    });
-    return r.ok;
-  },
-
-  async upsert(table, data, on_conflict) {
-    const token = supa.auth.getToken();
-    if (!token) return null;
-    let url = SUPA_URL + '/rest/v1/' + table;
-    if (on_conflict) url += '?on_conflict=' + on_conflict;
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {...supa._headers, 'Authorization': 'Bearer ' + token, 'Prefer': 'return=representation,resolution=merge-duplicates'},
-      body: JSON.stringify(data)
-    });
-    if (!r.ok) return null;
-    return await r.json();
-  }
-};
-
-
-// ── LOGIN / REGISTER PAGE ─────────────────────────────────────────────
-function AuthPage({onAuth}) {
-  const [mode, setMode] = React.useState('login');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
-  const [success, setSuccess] = React.useState('');
-
-  const handle = async (e) => {
-    e.preventDefault();
-    if (!email || !password) { setError('Completa todos los campos'); return; }
-    if (password.length < 6) { setError('La contrasena debe tener al menos 6 caracteres'); return; }
-    setLoading(true); setError(''); setSuccess('');
-    try {
-      let result;
-      if (mode === 'login') {
-        result = await supa.auth.signIn(email, password);
-        if (result.error) { setError(result.error.message || 'Error al iniciar sesion'); }
-        else if (result.access_token) { onAuth(result.user); }
-        else { setError('Credenciales incorrectas'); }
-      } else {
-        result = await supa.auth.signUp(email, password);
-        if (result.error) { setError(result.error.message || 'Error al registrarse'); }
-        else if (result.id || result.user) {
-          setSuccess('Cuenta creada! Revisa tu email para confirmar (o inicia sesion directo).');
-          setTimeout(() => setMode('login'), 3000);
-        } else { setError('Error al crear cuenta'); }
-      }
-    } catch(e) {
-      setError('Error de conexion. Intenta de nuevo.');
-    }
-    setLoading(false);
-  };
-
-  return React.createElement('div', {
-    style:{minHeight:'100vh',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}
-  },
-    React.createElement('div', {
-      style:{width:400,maxWidth:'94vw',background:'#111',border:'1px solid rgba(255,255,255,0.08)',borderRadius:16,padding:36,boxShadow:'0 25px 50px rgba(0,0,0,0.5)'}
-    },
-      // Logo
-      React.createElement('div', {style:{textAlign:'center',marginBottom:28}},
-        React.createElement('div', {style:{width:54,height:54,borderRadius:12,background:'#e53e3e',display:'flex',alignItems:'center',justifyContent:'center',fontSize:30,fontStyle:'italic',fontWeight:800,margin:'0 auto 12px',fontFamily:'Georgia,serif',color:'#fff'}}, 'E'),
-        React.createElement('div', {style:{fontSize:22,fontWeight:700,color:'#fff',letterSpacing:2}}, 'EliteLab'),
-        React.createElement('div', {style:{fontSize:13,color:'rgba(255,255,255,0.4)',marginTop:4}}, 'Productividad Gamificada')
-      ),
-
-      // Title
-      React.createElement('div', {style:{fontSize:20,fontWeight:700,color:'#fff',marginBottom:6,textAlign:'center'}},
-        mode === 'login' ? 'Iniciar sesion' : 'Crear cuenta'
-      ),
-      React.createElement('div', {style:{fontSize:13,color:'rgba(255,255,255,0.4)',marginBottom:24,textAlign:'center'}},
-        mode === 'login' ? 'Bienvenido de vuelta' : 'Comienza tu aventura hoy'
-      ),
-
-      // Form
-      React.createElement('form', {onSubmit:handle},
-        React.createElement('div', {style:{marginBottom:14}},
-          React.createElement('label', {style:{fontSize:11,color:'rgba(255,255,255,0.5)',marginBottom:6,display:'block',letterSpacing:1}}, 'EMAIL'),
-          React.createElement('input', {
-            type:'email', value:email, onChange:e=>setEmail(e.target.value),
-            placeholder:'tu@email.com', autoFocus:true,
-            style:{width:'100%',background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:8,padding:'10px 14px',color:'#fff',fontSize:14,outline:'none',boxSizing:'border-box'}
-          })
-        ),
-        React.createElement('div', {style:{marginBottom:20}},
-          React.createElement('label', {style:{fontSize:11,color:'rgba(255,255,255,0.5)',marginBottom:6,display:'block',letterSpacing:1}}, 'CONTRASENA'),
-          React.createElement('input', {
-            type:'password', value:password, onChange:e=>setPassword(e.target.value),
-            placeholder:'Minimo 6 caracteres',
-            style:{width:'100%',background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:8,padding:'10px 14px',color:'#fff',fontSize:14,outline:'none',boxSizing:'border-box'}
-          })
-        ),
-
-        error && React.createElement('div', {style:{background:'rgba(229,62,62,0.1)',border:'1px solid rgba(229,62,62,0.3)',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#fc8181',marginBottom:14}}, error),
-        success && React.createElement('div', {style:{background:'rgba(72,187,120,0.1)',border:'1px solid rgba(72,187,120,0.3)',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#68d391',marginBottom:14}}, success),
-
-        React.createElement('button', {
-          type:'submit', disabled:loading,
-          style:{width:'100%',background:loading?'#333':'#e53e3e',color:'#fff',border:'none',borderRadius:8,padding:'12px',fontSize:15,fontWeight:700,cursor:loading?'not-allowed':'pointer',fontFamily:'Inter,sans-serif',transition:'opacity .15s'}
-        }, loading ? 'Cargando...' : (mode === 'login' ? 'Ingresar' : 'Crear cuenta'))
-      ),
-
-      // Switch mode
-      React.createElement('div', {style:{textAlign:'center',marginTop:20,fontSize:13,color:'rgba(255,255,255,0.4)'}},
-        mode === 'login'
-          ? React.createElement('span', null, 'No tienes cuenta? ', React.createElement('span', {onClick:()=>{setMode('register');setError('');}, style:{color:'#e53e3e',cursor:'pointer',fontWeight:600}}, 'Registrate'))
-          : React.createElement('span', null, 'Ya tienes cuenta? ', React.createElement('span', {onClick:()=>{setMode('login');setError('');}, style:{color:'#e53e3e',cursor:'pointer',fontWeight:600}}, 'Inicia sesion'))
-      )
-    )
-  );
-}
-
+<script>
 
 
 'use strict';
@@ -635,9 +381,9 @@ const DEF = {
   user: {name:'jesus_riveros', avatar:'J', email:''},
   showBanner: true,
   habits: [
-    {id:1, name:'Leer 30 min', streak:0, done:false, xp:15, cat:'aprendizaje', icon:'📗'},
-    {id:2, name:'Meditacion', streak:0, done:false, xp:10, cat:'mente', icon:'🧘'},
-    {id:3, name:'Ejercicio', streak:0, done:false, xp:20, cat:'salud', icon:'💪'},
+    {id:1, name:'Leer 30 min', streak:0, done:false, xp:15, cat:'aprendizaje', icon:'BookOpen', color:'#4299e1'},
+    {id:2, name:'Meditacion', streak:0, done:false, xp:10, cat:'mente', icon:'Brain', color:'#9f7aea'},
+    {id:3, name:'Ejercicio', streak:0, done:false, xp:20, cat:'salud', icon:'Dumbbell', color:'#e53e3e'},
   ],
   tasks: [
     {id:1, name:'Armar pitch del negocio', status:'todo', priority:'Alta', tags:['negocio']},
@@ -699,38 +445,129 @@ function cls(...args) {
 }
 
 // ── NAV CONFIG ────────────────────────────────────────────────────────
+
+
+
+// ── LUCIDE ICONS ─────────────────────────────────────────────────────
+const LUCIDE_ICONS = {
+  LayoutDashboard: [ ["rect", { width: "7", height: "9", x: "3", y: "3", rx: "1" }], ["rect", { width: "7", height: "5", x: "14", y: "3", rx: "1" }], ["rect", { width: "7", height: "9", x: "14", y: "12", rx: "1" }], ["rect", { width: "7", height: "5", x: "3", y: "16", rx: "1" }] ],
+  Zap: [ [ "path", { d: "M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" } ] ],
+  SquareCheck: [ ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2" }], ["path", { d: "m9 12 2 2 4-4" }] ],
+  CircleDot: [ ["circle", { cx: "12", cy: "12", r: "10" }], ["circle", { cx: "12", cy: "12", r: "1" }] ],
+  TrendingUp: [ ["path", { d: "M16 7h6v6" }], ["path", { d: "m22 7-8.5 8.5-5-5L2 17" }] ],
+  Award: [ [ "path", { d: "m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526" } ], ["circle", { cx: "12", cy: "8", r: "6" }] ],
+  ChartBar: [ ["path", { d: "M3 3v16a2 2 0 0 0 2 2h16" }], ["path", { d: "M7 16h8" }], ["path", { d: "M7 11h12" }], ["path", { d: "M7 6h3" }] ],
+  Calendar: [ ["path", { d: "M8 2v4" }], ["path", { d: "M16 2v4" }], ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2" }], ["path", { d: "M3 10h18" }] ],
+  CreditCard: [ ["rect", { width: "20", height: "14", x: "2", y: "5", rx: "2" }], ["line", { x1: "2", x2: "22", y1: "10", y2: "10" }] ],
+  Dumbbell: [ [ "path", { d: "M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z" } ], ["path", { d: "m2.5 21.5 1.4-1.4" }], ["path", { d: "m20.1 3.9 1.4-1.4" }], [ "path", { d: "M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z" } ], ["path", { d: "m9.6 14.4 4.8-4.8" }] ],
+  Clock: [ ["circle", { cx: "12", cy: "12", r: "10" }], ["path", { d: "M12 6v6l4 2" }] ],
+  Navigation: [["polygon", { points: "3 11 22 2 13 21 11 13 3 11" }]],
+  Image: [ ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2" }], ["circle", { cx: "9", cy: "9", r: "2" }], ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" }] ],
+  User: [ ["path", { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" }], ["circle", { cx: "12", cy: "7", r: "4" }] ],
+  Users: [ ["path", { d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" }], ["path", { d: "M16 3.128a4 4 0 0 1 0 7.744" }], ["path", { d: "M22 21v-2a4 4 0 0 0-3-3.87" }], ["circle", { cx: "9", cy: "7", r: "4" }] ],
+  Settings: [ [ "path", { d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" } ], ["circle", { cx: "12", cy: "12", r: "3" }] ],
+  CalendarDays: [ ["path", { d: "M8 2v4" }], ["path", { d: "M16 2v4" }], ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2" }], ["path", { d: "M3 10h18" }], ["path", { d: "M8 14h.01" }], ["path", { d: "M12 14h.01" }], ["path", { d: "M16 14h.01" }], ["path", { d: "M8 18h.01" }], ["path", { d: "M12 18h.01" }], ["path", { d: "M16 18h.01" }] ],
+  Wallet: [ [ "path", { d: "M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" } ], ["path", { d: "M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" }] ],
+  ListChecks: [ ["path", { d: "M13 5h8" }], ["path", { d: "M13 12h8" }], ["path", { d: "M13 19h8" }], ["path", { d: "m3 17 2 2 4-4" }], ["path", { d: "m3 7 2 2 4-4" }] ],
+  Target: [ ["circle", { cx: "12", cy: "12", r: "10" }], ["circle", { cx: "12", cy: "12", r: "6" }], ["circle", { cx: "12", cy: "12", r: "2" }] ],
+  Star: [ [ "path", { d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" } ] ],
+  Flame: [ [ "path", { d: "M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" } ] ],
+  BookOpen: [ ["path", { d: "M12 7v14" }], [ "path", { d: "M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" } ] ],
+  Brain: [ ["path", { d: "M12 18V5" }], ["path", { d: "M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4" }], ["path", { d: "M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5" }], ["path", { d: "M17.997 5.125a4 4 0 0 1 2.526 5.77" }], ["path", { d: "M18 18a4 4 0 0 0 2-7.464" }], ["path", { d: "M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517" }], ["path", { d: "M6 18a4 4 0 0 1-2-7.464" }], ["path", { d: "M6.003 5.125a4 4 0 0 0-2.526 5.77" }] ],
+  Droplets: [ [ "path", { d: "M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z" } ], [ "path", { d: "M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97" } ] ],
+  Salad: [ ["path", { d: "M7 21h10" }], ["path", { d: "M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z" }], [ "path", { d: "M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03 1.1" } ], ["path", { d: "m13 12 4-4" }], ["path", { d: "M10.9 7.25A3.99 3.99 0 0 0 4 10c0 .73.2 1.41.54 2" }] ],
+  Music: [ ["path", { d: "M9 18V5l12-2v13" }], ["circle", { cx: "6", cy: "18", r: "3" }], ["circle", { cx: "18", cy: "16", r: "3" }] ],
+  Monitor: [ ["rect", { width: "20", height: "14", x: "2", y: "3", rx: "2" }], ["line", { x1: "8", x2: "16", y1: "21", y2: "21" }], ["line", { x1: "12", x2: "12", y1: "17", y2: "21" }] ],
+  Heart: [ [ "path", { d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" } ] ],
+  DollarSign: [ ["line", { x1: "12", x2: "12", y1: "2", y2: "22" }], ["path", { d: "M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" }] ],
+  Leaf: [ [ "path", { d: "M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" } ], ["path", { d: "M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" }] ],
+  Utensils: [ ["path", { d: "M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" }], ["path", { d: "M7 2v20" }], ["path", { d: "M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" }] ],
+  Coffee: [ ["path", { d: "M10 2v2" }], ["path", { d: "M14 2v2" }], [ "path", { d: "M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" } ], ["path", { d: "M6 2v2" }] ],
+  Bike: [ ["circle", { cx: "18.5", cy: "17.5", r: "3.5" }], ["circle", { cx: "5.5", cy: "17.5", r: "3.5" }], ["circle", { cx: "15", cy: "5", r: "1" }], ["path", { d: "M12 17.5V14l-3-3 4-3 2 3h2" }] ],
+  Moon: [ [ "path", { d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" } ] ],
+  Sun: [ ["circle", { cx: "12", cy: "12", r: "4" }], ["path", { d: "M12 2v2" }], ["path", { d: "M12 20v2" }], ["path", { d: "m4.93 4.93 1.41 1.41" }], ["path", { d: "m17.66 17.66 1.41 1.41" }], ["path", { d: "M2 12h2" }], ["path", { d: "M20 12h2" }], ["path", { d: "m6.34 17.66-1.41 1.41" }], ["path", { d: "m19.07 4.93-1.41 1.41" }] ],
+  Wind: [ ["path", { d: "M12.8 19.6A2 2 0 1 0 14 16H2" }], ["path", { d: "M17.5 8a2.5 2.5 0 1 1 2 4H2" }], ["path", { d: "M9.8 4.4A2 2 0 1 1 11 8H2" }] ],
+  Pill: [ ["path", { d: "m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z" }], ["path", { d: "m8.5 8.5 7 7" }] ],
+  Apple: [ ["path", { d: "M12 6.528V3a1 1 0 0 1 1-1h0" }], [ "path", { d: "M18.237 21A15 15 0 0 0 22 11a6 6 0 0 0-10-4.472A6 6 0 0 0 2 11a15.1 15.1 0 0 0 3.763 10 3 3 0 0 0 3.648.648 5.5 5.5 0 0 1 5.178 0A3 3 0 0 0 18.237 21" } ] ],
+  Trophy: [ ["path", { d: "M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978" }], ["path", { d: "M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978" }], ["path", { d: "M18 9h1.5a1 1 0 0 0 0-5H18" }], ["path", { d: "M4 22h16" }], ["path", { d: "M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" }], ["path", { d: "M6 9H4.5a1 1 0 0 1 0-5H6" }] ],
+  Pencil: [ [ "path", { d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" } ], ["path", { d: "m15 5 4 4" }] ],
+  Smile: [ ["circle", { cx: "12", cy: "12", r: "10" }], ["path", { d: "M8 14s1.5 2 4 2 4-2 4-2" }], ["line", { x1: "9", x2: "9.01", y1: "9", y2: "9" }], ["line", { x1: "15", x2: "15.01", y1: "9", y2: "9" }] ],
+  Rabbit: [ ["path", { d: "M13 16a3 3 0 0 1 2.24 5" }], ["path", { d: "M18 12h.01" }], [ "path", { d: "M18 21h-8a4 4 0 0 1-4-4 7 7 0 0 1 7-7h.2L9.6 6.4a1 1 0 1 1 2.8-2.8L15.8 7h.2c3.3 0 6 2.7 6 6v1a2 2 0 0 1-2 2h-1a3 3 0 0 0-3 3" } ], ["path", { d: "M20 8.54V4a2 2 0 1 0-4 0v3" }], ["path", { d: "M7.612 12.524a3 3 0 1 0-1.6 4.3" }] ],
+  PersonStanding: [ ["circle", { cx: "12", cy: "5", r: "1" }], ["path", { d: "m9 20 3-6 3 6" }], ["path", { d: "m6 8 6 2 6-2" }], ["path", { d: "M12 10v4" }] ]
+};
+
+function LucideIcon({name, size, color, strokeWidth}) {
+  var data = LUCIDE_ICONS[name];
+  if (!data) return null;
+  return h('svg', {
+    width:size||24, height:size||24, viewBox:'0 0 24 24',
+    fill:'none', stroke:color||'currentColor',
+    strokeWidth:strokeWidth||2, strokeLinecap:'round', strokeLinejoin:'round'
+  }, data.map(function(el,i){ return h(el[0], Object.assign({key:i},el[1])); }));
+}
+
+
+// ── NAV ICONS ─────────────────────────────────────────────────────────
+function NI({name, active}) {
+  var c = active ? '#ffffff' : 'rgba(255,255,255,0.5)';
+  if (name==='dashboard') return h(LucideIcon, {name:'LayoutDashboard', size:16, color:c, strokeWidth:1.8});
+  if (name==='habitos') return h(LucideIcon, {name:'Zap', size:16, color:c, strokeWidth:1.8});
+  if (name==='tareas') return h(LucideIcon, {name:'SquareCheck', size:16, color:c, strokeWidth:1.8});
+  if (name==='metas') return h(LucideIcon, {name:'CircleDot', size:16, color:c, strokeWidth:1.8});
+  if (name==='progreso') return h(LucideIcon, {name:'TrendingUp', size:16, color:c, strokeWidth:1.8});
+  if (name==='logros') return h(LucideIcon, {name:'Award', size:16, color:c, strokeWidth:1.8});
+  if (name==='ranking') return h(LucideIcon, {name:'ChartBar', size:16, color:c, strokeWidth:1.8});
+  if (name==='modo_ia') return h(LucideIcon, {name:'Star', size:16, color:c, strokeWidth:1.8});
+  if (name==='plan') return h(LucideIcon, {name:'CalendarDays', size:16, color:c, strokeWidth:1.8});
+  if (name==='finanzas') return h(LucideIcon, {name:'CreditCard', size:16, color:c, strokeWidth:1.8});
+  if (name==='entrenamiento') return h(LucideIcon, {name:'Dumbbell', size:16, color:c, strokeWidth:1.8});
+  if (name==='cronograma') return h(LucideIcon, {name:'Clock', size:16, color:c, strokeWidth:1.8});
+  if (name==='dieta') return h(LucideIcon, {name:'Navigation', size:16, color:c, strokeWidth:1.8});
+  if (name==='calendario') return h(LucideIcon, {name:'Calendar', size:16, color:c, strokeWidth:1.8});
+  if (name==='enfoque') return h(LucideIcon, {name:'Target', size:16, color:c, strokeWidth:1.8});
+  if (name==='wallpapers') return h(LucideIcon, {name:'Image', size:16, color:c, strokeWidth:1.8});
+  if (name==='perfil') return h(LucideIcon, {name:'User', size:16, color:c, strokeWidth:1.8});
+  if (name==='familia') return h(LucideIcon, {name:'Users', size:16, color:c, strokeWidth:1.8});
+  if (name==='config') return h(LucideIcon, {name:'Settings', size:16, color:c, strokeWidth:1.8});
+  return h(LucideIcon, {name:'CircleDot', size:16, color:c, strokeWidth:1.8});
+}
+
+
 const NAV = [
   {sec:'PRINCIPAL', items:[
-    {id:'dashboard', ico:'▣', l:'Dashboard'},
-    {id:'habitos',   ico:'🔥', l:'Habitos'},
-    {id:'tareas',    ico:'○', l:'Tareas'},
+    {id:'dashboard', ico:'dashboard', l:'Dashboard'},
+    {id:'habitos',   ico:'habitos',   l:'Habitos'},
+    {id:'tareas',    ico:'tareas',    l:'Tareas'},
   ]},
   {sec:'PROGRESO', items:[
-    {id:'metas',    ico:'◎', l:'Metas'},
-    {id:'progreso', ico:'〜', l:'Progreso'},
-    {id:'logros',   ico:'♛', l:'Logros'},
-    {id:'ranking',  ico:'♔', l:'Ranking',      badge:'TOP',   bc:'btop'},
-    {id:'modo_ia',  ico:'✦', l:'Modo IA',      badge:'PRONTO',bc:'bpronto'},
-    {id:'referir',  ico:'◈', l:'Refiere y Gana',badge:'TOP',  bc:'btop'},
+    {id:'metas',    ico:'metas',    l:'Metas'},
+    {id:'progreso', ico:'progreso', l:'Progreso'},
+    {id:'logros',   ico:'logros',   l:'Logros'},
+    {id:'ranking',  ico:'ranking',  l:'Ranking'},
+    {id:'modo_ia',  ico:'modo_ia',  l:'Modo IA'},
   ]},
   {sec:'HERRAMIENTAS', items:[
-    {id:'plan',          ico:'≡', l:'Plan del dia'},
-    {id:'finanzas',      ico:'$', l:'Finanzas'},
-    {id:'entrenamiento', ico:'↗', l:'Entrenamiento'},
-    {id:'calendario',    ico:'▦', l:'Calendario'},
-    {id:'enfoque',       ico:'◷', l:'Enfoque'},
+    {id:'plan',          ico:'plan',          l:'Plan del dia'},
+    {id:'finanzas',      ico:'finanzas',      l:'Finanzas'},
+    {id:'entrenamiento', ico:'entrenamiento', l:'Entrenamiento'},
+    {id:'cronograma',    ico:'cronograma',    l:'Cronograma'},
+    {id:'dieta',         ico:'dieta',         l:'Dieta'},
+    {id:'calendario',    ico:'calendario',    l:'Calendario'},
+    {id:'enfoque',       ico:'enfoque',       l:'Enfoque'},
+    {id:'wallpapers',    ico:'wallpapers',    l:'Wallpapers', badge:'NEW', bc:'bnew'},
   ]},
   {sec:'CONFIG', items:[
-    {id:'perfil', ico:'⊙', l:'Perfil'},
-    {id:'config', ico:'⊗', l:'Configuracion'},
+    {id:'perfil',  ico:'perfil',  l:'Perfil'},
+    {id:'familia', ico:'familia', l:'Familia'},
+    {id:'config',  ico:'config',  l:'Configuracion'},
   ]},
 ];
 const PAGE_LABELS = {
   dashboard:'Dashboard', habitos:'Habitos', tareas:'Tareas', metas:'Metas',
   progreso:'Progreso', logros:'Logros', ranking:'Ranking', modo_ia:'Modo IA',
-  referir:'Refiere y Gana', plan:'Plan del dia', finanzas:'Finanzas',
-  entrenamiento:'Entrenamiento', calendario:'Calendario', enfoque:'Enfoque',
-  perfil:'Perfil', config:'Configuracion',
+  plan:'Plan del dia', finanzas:'Finanzas', entrenamiento:'Entrenamiento',
+  cronograma:'Cronograma', dieta:'Dieta', calendario:'Calendario', enfoque:'Enfoque',
+  wallpapers:'Wallpapers', perfil:'Perfil', familia:'Familia', config:'Configuracion',
 };
 
 // ── TOAST ─────────────────────────────────────────────────────────────
@@ -959,14 +796,51 @@ function PageDashboard({state, setState, showToast, setPage, handleNotif}) {
 // ── HABITOS ───────────────────────────────────────────────────────────
 function PageHabitos({state, setState, showToast}) {
   const [showMod, setShowMod] = useState(false);
-  const [form, setForm] = useState({name:'', cat:'salud', xp:15, icon:'📋'});
+  const [form, setForm] = useState({name:'', cat:'salud', xp:15, icon:'Pencil', color:'#e53e3e'});
   const CATS = ['salud','aprendizaje','trabajo','mente','deportes','finanzas','otros'];
-  const ICONS = ['📋','🔥','📗','💪','🧘','🎯','💰','🤝','⭐','🚀','📚','🏃'];
+  const ICONS = [
+    {key:'Dumbbell', label:'Gym'},
+    {key:'PersonStanding', label:'Correr'},
+    {key:'Monitor', label:'Trabajo'},
+    {key:'Brain', label:'Mente'},
+    {key:'Droplets', label:'Agua'},
+    {key:'Salad', label:'Dieta'},
+    {key:'Smile', label:'Bienestar'},
+    {key:'Rabbit', label:'Rapido'},
+    {key:'Target', label:'Meta'},
+    {key:'Music', label:'Musica'},
+    {key:'Leaf', label:'Naturaleza'},
+    {key:'Star', label:'Estrella'},
+    {key:'Pencil', label:'Escribir'},
+    {key:'Moon', label:'Noche'},
+    {key:'Coffee', label:'Cafe'},
+    {key:'BookOpen', label:'Leer'},
+    {key:'Heart', label:'Salud'},
+    {key:'Bike', label:'Ciclismo'},
+    {key:'Sun', label:'Manana'},
+    {key:'Wind', label:'Respirar'},
+    {key:'Utensils', label:'Comer'},
+    {key:'DollarSign', label:'Finanzas'},
+    {key:'Apple', label:'Fruta'},
+    {key:'Pill', label:'Medicacion'},
+    {key:'Zap', label:'Energia'},
+    {key:'Flame', label:'Intenso'},
+    {key:'TrendingUp', label:'Crecer'},
+    {key:'Clock', label:'Tiempo'},
+    {key:'Trophy', label:'Logro'},
+  ];
+  const COLORS = ['#e53e3e','#ed8936','#ecc94b','#48bb78','#4299e1','#9f7aea','#ed64a6','#667eea'];
+
   const now = new Date();
-  const todayD = now.getDate();
+  const monthName = now.toLocaleDateString('es',{month:'long',year:'numeric'});
   const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const todayD = now.getDate();
   const done = state.habits.filter(h=>h.done).length;
   const total = state.habits.length;
+  const pct = total>0?Math.round((done/total)*100):0;
+
+  // Scroll ref for grid
+  const gridRef = useRef(null);
 
   const toggle = id => {
     setState(prev => {
@@ -975,17 +849,17 @@ function PageHabitos({state, setState, showToast}) {
         const newDone = !h.done;
         return {...h, done:newDone, streak: newDone ? h.streak+1 : Math.max(0,h.streak-1)};
       });
-      const h = habits.find(x=>x.id===id);
+      const habit = habits.find(x=>x.id===id);
       let player = {...prev.player};
-      if (h.done) {
-        player.xp = (player.xp||0) + h.xp;
+      if (habit.done) {
+        player.xp = (player.xp||0) + habit.xp;
         if (player.xp >= player.xpToNext) {
-          player.level = (player.level||1) + 1;
-          player.xp = player.xp - player.xpToNext;
-          player.xpToNext = Math.round(player.xpToNext * 1.5);
-          showToast({icon:'⭐', title:'NIVEL '+player.level+' !', sub:'Subiste de nivel!'});
+          player.level = (player.level||1)+1;
+          player.xp -= player.xpToNext;
+          player.xpToNext = Math.round(player.xpToNext*1.5);
+          showToast({icon:'⭐', title:'NIVEL '+player.level+'!', sub:'Subiste de nivel!'});
         } else {
-          showToast({icon:'🔥', title:'+'+h.xp+' XP', sub:h.name});
+          showToast({icon:'Flame', title:'+'+habit.xp+' XP', sub:habit.name});
         }
       }
       return {...prev, habits, player};
@@ -994,100 +868,290 @@ function PageHabitos({state, setState, showToast}) {
 
   const addHabit = () => {
     if (!form.name.trim()) return;
-    setState(p=>({...p, habits:[...p.habits, {id:Date.now(), name:form.name, streak:0, done:false, xp:Number(form.xp), cat:form.cat, icon:form.icon}]}));
-    setForm({name:'', cat:'salud', xp:15, icon:'📋'});
+    setState(p=>({...p, habits:[...p.habits, {
+      id:Date.now(), name:form.name, streak:0, done:false,
+      xp:Number(form.xp), cat:form.cat, icon:form.icon, color:form.color
+    }]}));
+    setForm({name:'', cat:'salud', xp:15, icon:'Pencil', color:'#e53e3e'});
     setShowMod(false);
   };
 
   const del = id => setState(p=>({...p, habits:p.habits.filter(h=>h.id!==id)}));
 
+  // Chart data - % completados por dia del mes actual
+  const chartW = 700, chartH = 160, padL = 45, padB = 30, padT = 15, padR = 20;
+  const innerW = chartW - padL - padR;
+  const innerH = chartH - padB - padT;
+  const yLines = [0,25,50,75,100];
+  const xLabels = [1,6,11,16,21,26];
+
   return h(Fragment, null,
+    // ── HEADER ──────────────────────────────────────────────────────
     h('div', {style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20}},
       h('div', null,
-        h('div', {style:{fontSize:22,fontWeight:800}}, 'Habitos'),
-        h('div', {style:{fontSize:13,color:'var(--t3)',marginTop:3}}, 'Control de ejecucion diaria')
+        h('div', {style:{fontSize:28,fontWeight:800,color:'#fff',marginBottom:4}}, 'Habitos'),
+        h('div', {style:{fontSize:13,color:'var(--t3)'}}, 'Control de ejecucion diaria — habitos y progreso.')
       ),
-      h('div', {style:{display:'flex',alignItems:'center',gap:12}},
+      h('div', {style:{display:'flex',alignItems:'center',gap:16}},
         h('div', {style:{textAlign:'right'}},
-          h('div', {style:{fontSize:24,fontWeight:800,color:'var(--red)'}}, total>0?Math.round((done/total)*100):0, '%'),
-          h('div', {style:{fontSize:11,color:'var(--t3)'}}, 'Progreso hoy')
+          h('div', {style:{fontSize:40,fontWeight:900,color:'var(--red)',lineHeight:1}}, pct+'%'),
+          h('div', {style:{fontSize:12,color:'var(--t3)',marginTop:2}}, 'Progreso '+now.toLocaleDateString('es',{month:'long'}))
         ),
-        h('button', {className:'btn btn-r btn-lg', onClick:()=>setShowMod(true)}, '+ Agregar')
+        h('button', {
+          className:'btn btn-r btn-lg',
+          onClick:()=>setShowMod(true),
+          style:{borderRadius:14,fontSize:15,fontWeight:700,padding:'12px 24px',display:'flex',alignItems:'center',gap:8}
+        }, h('span',{style:{fontSize:18,fontWeight:400}},'+'), ' Agregar')
       )
     ),
 
-    h('div', {style:{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:10,padding:'13px 16px',marginBottom:14,display:'flex',alignItems:'center',justifyContent:'space-between'}},
-      h('span', {style:{fontSize:14,fontWeight:600}}, 'Hoy: '+done+'/'+total+' habitos completados'),
-      h('span', {style:{fontSize:13,color:'var(--t3)'}}, 'Faltan '+(total-done))
+    // ── BARRA PROGRESO HOY ───────────────────────────────────────────
+    h('div', {style:{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:12,padding:'14px 18px',marginBottom:14}},
+      h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}},
+        h('span', {style:{fontSize:14,fontWeight:600}}, 'Hoy: '+done+'/'+total+' habitos completados'),
+        h('span', {style:{fontSize:13,color:'var(--t3)'}}, 'Faltan '+(total-done))
+      ),
+      h('div', {style:{height:6,background:'var(--bg4)',borderRadius:3,overflow:'hidden'}},
+        h('div', {style:{height:'100%',width:pct+'%',background:'var(--red)',borderRadius:3,transition:'width .4s'}})
+      )
     ),
 
-    h('div', {className:'card2', style:{marginBottom:14}},
-      h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}},
-        h('div', {style:{fontSize:14,fontWeight:600}}, 'Grilla de Habitos'),
-        h('div', {style:{fontSize:12,color:'var(--t3)'}}, 'Semana actual')
+    // ── GRAFICO DE PROGRESO MENSUAL ──────────────────────────────────
+    h('div', {style:{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:12,padding:'18px',marginBottom:14}},
+      h('div', {style:{fontSize:14,fontWeight:700,marginBottom:16}},
+        'Progreso de '+now.toLocaleDateString('es',{month:'long',year:'numeric'}).replace(/^\w/,c=>c.toUpperCase())
       ),
-      h('div', {style:{overflowX:'auto'}},
-        h('table', {style:{borderCollapse:'separate',borderSpacing:'3px',width:'100%'}},
+      h('svg', {width:'100%',viewBox:'0 0 '+chartW+' '+chartH,style:{overflow:'visible'}},
+        // Y axis grid lines and labels
+        yLines.map(y => {
+          const yPos = padT + innerH - (y/100)*innerH;
+          return h('g', {key:y},
+            h('line', {x1:padL,y1:yPos,x2:chartW-padR,y2:yPos,stroke:'rgba(255,255,255,0.06)',strokeWidth:1,strokeDasharray:'4,4'}),
+            h('text', {x:padL-8,y:yPos+4,textAnchor:'end',fontSize:11,fill:'rgba(255,255,255,0.3)',fontFamily:'Inter,sans-serif'}, y+'%')
+          );
+        }),
+        // X axis labels
+        xLabels.map(d => {
+          const xPos = padL + ((d-1)/(daysInMonth-1))*innerW;
+          return h('text', {key:d, x:xPos,y:chartH-8,textAnchor:'middle',fontSize:11,fill:'rgba(255,255,255,0.3)',fontFamily:'Inter,sans-serif'}, d);
+        }),
+        // Today marker
+        h('line', {
+          x1:padL+((todayD-1)/(daysInMonth-1))*innerW,
+          y1:padT,
+          x2:padL+((todayD-1)/(daysInMonth-1))*innerW,
+          y2:padT+innerH,
+          stroke:'rgba(229,62,62,0.3)',strokeWidth:1,strokeDasharray:'3,3'
+        }),
+        // Data line (today at pct, rest at 0)
+        pct > 0 && h('path', {
+          d:'M '+(padL)+' '+(padT+innerH)+' L '+(padL+((todayD-1)/(daysInMonth-1))*innerW)+' '+(padT+innerH-(pct/100)*innerH),
+          fill:'none', stroke:'var(--red)', strokeWidth:2, strokeLinecap:'round'
+        }),
+        // Dot at today
+        pct > 0 && h('circle', {
+          cx:padL+((todayD-1)/(daysInMonth-1))*innerW,
+          cy:padT+innerH-(pct/100)*innerH,
+          r:4, fill:'var(--red)'
+        })
+      )
+    ),
+
+    // ── GRILLA DE HABITOS ────────────────────────────────────────────
+    h('div', {style:{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:12,padding:'18px',marginBottom:14}},
+      h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}},
+        h('div', null,
+          h('div', {style:{fontSize:15,fontWeight:700}}, 'Grilla de Habitos'),
+          h('div', {style:{fontSize:11,color:'var(--t3)',marginTop:2}}, 'Arrastra para reordenar · Clic en el lapiz para editar')
+        ),
+        h('div', {style:{fontSize:12,color:'var(--t3)'}},
+          'Semana 1/'+String(todayD)+' — 7/'+String(Math.min(7,daysInMonth))
+        )
+      ),
+      h('div', {ref:gridRef, style:{overflowX:'auto'}},
+        h('table', {style:{borderCollapse:'separate',borderSpacing:'0',width:'100%',minWidth:600}},
           h('thead', null,
             h('tr', null,
-              h('th', {style:{textAlign:'left',fontSize:12,color:'var(--t3)',fontWeight:500,padding:'4px 8px',width:130}}, 'Habito'),
-              Array.from({length:Math.min(23,daysInMonth)}, (_,i) =>
-                h('th', {key:i, style:{fontSize:10,color:i+1===todayD?'var(--red)':'var(--t3)',fontWeight:500,padding:'4px 2px',textAlign:'center',width:24}},
-                  h('div', {style:{width:22,height:22,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:i+1===todayD?'var(--red)':'transparent',color:i+1===todayD?'#fff':'inherit'}}, i+1)
-                )
-              )
+              h('th', {style:{textAlign:'left',fontSize:12,color:'var(--t3)',fontWeight:500,padding:'4px 8px 8px',width:180,minWidth:180}}, 'Habito'),
+              Array.from({length:Math.min(21,daysInMonth)}, (_,i) => {
+                const d = i+1;
+                const isToday = d === todayD;
+                return h('th', {key:i, style:{padding:'0 2px 8px',textAlign:'center',width:28,minWidth:28}},
+                  h('div', {style:{
+                    width:24, height:24, borderRadius:'50%',
+                    background:isToday?'var(--red)':'transparent',
+                    color:isToday?'#fff':'rgba(255,255,255,0.35)',
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:11, fontWeight:isToday?700:400, margin:'0 auto'
+                  }}, d)
+                );
+              })
             )
           ),
           h('tbody', null,
-            state.habits.map(habit =>
+            state.habits.map((habit, hi) =>
               h('tr', {key:habit.id},
-                h('td', {style:{padding:'3px 8px'}},
-                  h('div', {style:{display:'flex',alignItems:'center',gap:6,fontSize:13}},
-                    h('span', null, habit.icon||'📋'),
-                    h('span', {style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:90}}, habit.name)
+                h('td', {style:{padding:'4px 8px',borderBottom:'1px solid var(--bor)'}},
+                  h('div', {style:{display:'flex',alignItems:'center',gap:8}},
+                    h('div', {style:{width:6,height:6,background:'var(--bg3)',cursor:'move',opacity:.4,display:'flex',flexDirection:'column',gap:2,justifyContent:'center'}},
+                      [0,1].map(i => h('div',{key:i,style:{display:'flex',gap:2}},
+                        [0,1].map(j => h('div',{key:j,style:{width:2,height:2,borderRadius:'50%',background:'rgba(255,255,255,0.3)'}}))
+                      ))
+                    ),
+                    h('div', {style:{
+                      width:28,height:28,borderRadius:7,
+                      background:habit.color||'var(--red)',
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      flexShrink:0, color:'#fff'
+                    }}, h(LucideIcon, {name:habit.icon||'Flame', size:16, color:'#fff', strokeWidth:2})),
+                    h('span', {style:{fontSize:13,fontWeight:500,flex:1}}, habit.name),
+                    h('button', {
+                      className:'del',
+                      onClick:()=>del(habit.id),
+                      style:{opacity:0.4,fontSize:12,padding:'2px 4px'}
+                    }, '🗑')
                   )
                 ),
-                Array.from({length:Math.min(23,daysInMonth)}, (_,i) =>
-                  h('td', {key:i, style:{textAlign:'center',padding:'2px'}},
+                Array.from({length:Math.min(21,daysInMonth)}, (_,i) => {
+                  const d = i+1;
+                  const isToday = d === todayD;
+                  const isDone = habit.done && isToday;
+                  const isPast = d < todayD;
+                  return h('td', {key:i, style:{padding:'4px 2px',textAlign:'center',borderBottom:'1px solid var(--bor)'}},
                     h('div', {
-                      onClick:()=>i+1===todayD&&toggle(habit.id),
-                      style:{width:20,height:20,borderRadius:4,border:'1px solid '+(i+1===todayD?'rgba(229,62,62,0.5)':'var(--bor)'),background:habit.done&&i+1===todayD?'var(--green)':'var(--bg4)',cursor:i+1===todayD?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#fff'}
-                    }, habit.done&&i+1===todayD?'✓':'')
-                  )
-                )
+                      onClick:()=>isToday&&toggle(habit.id),
+                      style:{
+                        width:22, height:22, borderRadius:5,
+                        border:isToday?'2px dashed var(--red)':isPast?'1px solid rgba(255,255,255,0.08)':'1px solid rgba(255,255,255,0.06)',
+                        background:isDone?'var(--green)':isPast?'rgba(255,255,255,0.03)':'transparent',
+                        cursor:isToday?'pointer':'default',
+                        display:'flex',alignItems:'center',justifyContent:'center',
+                        margin:'0 auto',fontSize:10,color:'#fff',transition:'all .15s'
+                      }
+                    }, isDone?'✓':'')
+                  );
+                })
               )
             )
           )
         )
       ),
-      h('div', {style:{marginTop:14,paddingTop:14,borderTop:'1px solid var(--bor)',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-        h('button', {className:'btn btn-r', onClick:()=>setShowMod(true)}, '+ Agregar'),
-        h('span', {style:{fontSize:13,color:'var(--t3)'}}, done+' de '+total+' completados hoy')
+      // Footer de grilla
+      h('div', {style:{marginTop:12,paddingTop:12,borderTop:'1px solid var(--bor)',display:'flex',justifyContent:'space-between',alignItems:'center'}},
+        h('button', {
+          className:'btn btn-r',
+          onClick:()=>setShowMod(true),
+          style:{borderRadius:12,fontSize:14,fontWeight:700,padding:'10px 22px',display:'flex',alignItems:'center',gap:6}
+        }, h('span',{style:{fontSize:16,fontWeight:400}},'+'), ' Agregar'),
+        h('div', {style:{display:'flex',alignItems:'center',gap:16}},
+          h('span', {style:{fontSize:13,color:'var(--t3)'}}, 'Hoy: '+done+' de '+total+' completados'),
+          h('span', {style:{fontSize:14,fontWeight:700,color:'var(--red)'}}, pct+'%')
+        )
       )
     ),
 
-    showMod && h(Modal, {title:'Nuevo Habito', onClose:()=>setShowMod(false)},
-      h(FG, {label:'NOMBRE'},
-        h('input', {className:'inp', placeholder:'ej. Hacer ejercicio', value:form.name, onChange:e=>setForm({...form,name:e.target.value}), onKeyDown:e=>e.key==='Enter'&&addHabit(), autoFocus:true})
-      ),
-      h('div', {style:{display:'flex',gap:10}},
-        h(FG, {label:'CATEGORIA'},
-          h('select', {className:'inp', value:form.cat, onChange:e=>setForm({...form,cat:e.target.value})},
-            CATS.map(c => h('option', {key:c, value:c}, c))
+    // ── MODAL ────────────────────────────────────────────────────────
+    showMod && h('div', {className:'ov', onClick:e=>e.target===e.currentTarget&&setShowMod(false)},
+      h('div', {style:{background:'#1a1a1a',border:'1px solid rgba(255,255,255,0.1)',borderRadius:16,padding:28,width:480,maxWidth:'96vw',maxHeight:'92vh',overflowY:'auto'}},
+        // Header
+        h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}},
+          h('div', null,
+            h('div', {style:{fontSize:18,fontWeight:700,color:'#fff'}}, 'Nuevo Habito'),
+            h('div', {style:{fontSize:13,color:'rgba(255,255,255,0.4)',marginTop:3}}, 'Define un habito y comienza a rastrear')
+          ),
+          h('button', {onClick:()=>setShowMod(false), style:{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.4)',fontSize:18,lineHeight:1}}, 'x')
+        ),
+        // Emoji picker
+        h('div', {style:{marginBottom:18}},
+          h('div', {style:{fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:10,fontWeight:500}}, 'Emoji'),
+          h('div', {style:{display:'flex',flexWrap:'wrap',gap:8}},
+            ICONS.map(ic => h('div', {key:ic.key, onClick:()=>setForm({...form,icon:ic.key}), style:{
+              width:44,height:44,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',
+              cursor:'pointer',transition:'all .12s',
+              background:form.icon===ic.key?form.color||'var(--red)':'rgba(255,255,255,0.07)',
+              border:'none', color:form.icon===ic.key?'#fff':'rgba(255,255,255,0.6)'
+            }}, h(LucideIcon, {name:ic.key, size:20, color:form.icon===ic.key?'#fff':'rgba(255,255,255,0.6)', strokeWidth:1.5})))
           )
         ),
-        h(FG, {label:'XP'},
-          h('input', {className:'inp', type:'number', min:5, max:100, value:form.xp, onChange:e=>setForm({...form,xp:e.target.value})})
+        // Nombre
+        h('div', {style:{marginBottom:18}},
+          h('div', {style:{fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:8,fontWeight:500}}, 'Nombre *'),
+          h('input', {
+            style:{width:'100%',background:'#111',border:'2px solid var(--red)',borderRadius:10,padding:'12px 14px',color:'#fff',fontSize:14,outline:'none',boxSizing:'border-box',fontFamily:'Inter,sans-serif'},
+            placeholder:'ej: Meditacion matutina',
+            value:form.name,
+            onChange:e=>setForm({...form,name:e.target.value}),
+            onKeyDown:e=>e.key==='Enter'&&addHabit(),
+            autoFocus:true
+          })
+        ),
+        // Dias de la semana
+        h('div', {style:{marginBottom:18}},
+          h('div', {style:{fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:10,fontWeight:500}}, 'Dias de la Semana'),
+          h('div', {style:{display:'flex',gap:8}},
+            ['D','L','M','M','J','V','S'].map((d,i) => {
+              const sel = (form.dias||[1,2,3,4,5,6,7]).includes(i+1);
+              return h('div', {key:i, onClick:()=>{
+                const dias = form.dias||[1,2,3,4,5,6,7];
+                const newDias = dias.includes(i+1)?dias.filter(x=>x!==i+1):[...dias,i+1];
+                setForm({...form,dias:newDias});
+              }, style:{
+                width:40,height:40,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',
+                fontSize:13,fontWeight:700,cursor:'pointer',transition:'all .12s',
+                background:sel?'var(--red)':'rgba(255,255,255,0.07)',
+                color:sel?'#fff':'rgba(255,255,255,0.5)',
+                border:'none'
+              }}, d);
+            })
+          )
+        ),
+        // Color
+        h('div', {style:{marginBottom:18}},
+          h('div', {style:{fontSize:12,color:'rgba(255,255,255,0.5)',marginBottom:10,fontWeight:500}}, 'Color'),
+          h('div', {style:{display:'flex',gap:8,flexWrap:'wrap'}},
+            ['#e53e3e','#9f7aea','#d53f8c','#d69e2e','#38a169','#00b5d8','#dd6b20','#c53030','#805ad5','#319795','#b7791f','#b7791f'].map((c,i) =>
+              h('div', {key:i, onClick:()=>setForm({...form,color:c}), style:{
+                width:34,height:34,borderRadius:'50%',background:c,cursor:'pointer',transition:'all .15s',
+                outline:form.color===c?'3px solid #fff':'3px solid transparent',
+                outlineOffset:2
+              }})
+            )
+          )
+        ),
+        // Recordatorio toggle
+        h('div', {style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:24,padding:'10px 0',borderTop:'1px solid rgba(255,255,255,0.07)'}},
+          h('div', {style:{display:'flex',alignItems:'center',gap:8,color:'rgba(255,255,255,0.5)',fontSize:13}},
+            h('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2},
+              h('path',{d:'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9'}),
+              h('path',{d:'M13.73 21a2 2 0 01-3.46 0'})
+            ),
+            'Recordatorio diario'
+          ),
+          h('div', {
+            onClick:()=>setForm({...form,recordatorio:!form.recordatorio}),
+            style:{
+              width:44,height:24,borderRadius:12,cursor:'pointer',transition:'background .2s',
+              background:form.recordatorio?'var(--red)':'rgba(255,255,255,0.15)',
+              position:'relative',flexShrink:0
+            }
+          },
+            h('div', {style:{
+              position:'absolute',top:2,left:form.recordatorio?22:2,
+              width:20,height:20,borderRadius:'50%',background:'#fff',transition:'left .2s'
+            }})
+          )
+        ),
+        // Botones
+        h('div', {style:{display:'flex',gap:12}},
+          h('button', {
+            onClick:()=>setShowMod(false),
+            style:{flex:1,padding:'13px',borderRadius:12,border:'1.5px solid var(--red)',background:'transparent',color:'var(--red)',fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'Inter,sans-serif'}
+          }, 'Cancelar'),
+          h('button', {
+            onClick:addHabit,
+            style:{flex:1,padding:'13px',borderRadius:12,border:'none',background:'var(--red)',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'Inter,sans-serif',display:'flex',alignItems:'center',justifyContent:'center',gap:6}
+          }, h('span',{style:{fontSize:16,fontWeight:400}},'+'), ' Crear Habito')
         )
-      ),
-      h(FG, {label:'ICONO'},
-        h('div', {style:{display:'flex',flexWrap:'wrap',gap:6}},
-          ICONS.map(ic => h('div', {key:ic, onClick:()=>setForm({...form,icon:ic}), style:{width:34,height:34,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,cursor:'pointer',border:'2px solid '+(form.icon===ic?'var(--red)':'var(--bor)'),background:form.icon===ic?'rgba(229,62,62,0.1)':'var(--bg4)'}}, ic))
-        )
-      ),
-      h('div', {style:{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}},
-        h('button', {className:'btn btn-ghost', onClick:()=>setShowMod(false)}, 'Cancelar'),
-        h('button', {className:'btn btn-r', onClick:addHabit}, 'Crear')
       )
     )
   );
@@ -1534,7 +1598,7 @@ function PageProgreso({state}) {
   return h(Fragment, null,
     h('div', {style:{fontSize:22,fontWeight:800,marginBottom:20}}, 'Progreso'),
     h('div', {className:'g4', style:{marginBottom:18}},
-      [{label:'NIVEL ACTUAL',val:level},{label:'TAREAS HECHAS',val:tasksDone},{label:'HABITOS HOY',val:habitsDone},{label:'RACHA MAX',val:maxStreak+'d',icon:'🔥'}].map((m,i) =>
+      [{label:'NIVEL ACTUAL',val:level},{label:'TAREAS HECHAS',val:tasksDone},{label:'HABITOS HOY',val:habitsDone},{label:'RACHA MAX',val:maxStreak+'d',icon:'Flame'}].map((m,i) =>
         h('div', {key:i, className:'card2', style:{padding:'20px 18px'}},
           h('div', {style:{fontSize:42,fontWeight:800,display:'flex',alignItems:'center',gap:6}}, m.val, m.icon&&h('span',{style:{fontSize:28}},m.icon)),
           h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1.2,color:'var(--t3)',textTransform:'uppercase',marginTop:8}}, m.label)
@@ -1773,186 +1837,10 @@ function PagePlan({state, setState}) {
 }
 
 // ── ENTRENAMIENTO ─────────────────────────────────────────────────────
-const EJERCICIOS_DB = {
-  pecho: ['Press Banca','Press Inclinado','Aperturas','Fondos','Pullover','Press Mancuernas'],
-  espalda: ['Dominadas','Remo con Barra','Remo con Mancuerna','Jalon al Pecho','Peso Muerto','Pullover'],
-  hombros: ['Press Militar','Elevaciones Laterales','Elevaciones Frontales','Pajaros','Face Pull'],
-  biceps: ['Curl con Barra','Curl con Mancuerna','Curl Martillo','Curl Concentrado','Curl en Polea'],
-  triceps: ['Fondos','Press Frances','Jalon en Polea','Patada de Triceps','Rompecraneos'],
-  piernas: ['Sentadilla','Prensa','Zancadas','Extension de Cuadriceps','Curl de Femoral','Pantorrillas'],
-  abdomen: ['Crunch','Plancha','Rueda Abdominal','Elevacion de Piernas','Russian Twist','Bicicleta'],
-  cardio: ['Correr','Bicicleta','Saltar Soga','Burpees','Mountain Climbers','Remo'],
-  funcional: ['Burpees','Kettlebell Swing','Box Jump','Battle Ropes','TRX Row','Slam Ball'],
-};
-
-const MUSCULOS_MAP = {
-  'Press Banca':'pecho','Press Inclinado':'pecho','Aperturas':'pecho','Fondos':'pecho',
-  'Dominadas':'espalda','Remo con Barra':'espalda','Peso Muerto':'espalda','Jalon al Pecho':'espalda',
-  'Press Militar':'hombros','Elevaciones Laterales':'hombros','Elevaciones Frontales':'hombros',
-  'Curl con Barra':'biceps','Curl con Mancuerna':'biceps','Curl Martillo':'biceps',
-  'Press Frances':'triceps','Jalon en Polea':'triceps','Fondos':'triceps',
-  'Sentadilla':'piernas','Prensa':'piernas','Zancadas':'piernas','Curl de Femoral':'piernas',
-  'Crunch':'abdomen','Plancha':'abdomen','Elevacion de Piernas':'abdomen',
-  'Correr':'cardio','Bicicleta':'cardio','Burpees':'funcional',
-};
-
-const MUSCULO_SVG_PARTS = {
-  pecho:    {front:['M 95 180 Q 110 175 120 195 Q 110 210 95 205 Z','M 155 180 Q 140 175 130 195 Q 140 210 155 205 Z'], back:[]},
-  espalda:  {front:[], back:['M 88 175 Q 95 170 105 185 Q 100 200 88 195 Z','M 162 175 Q 155 170 145 185 Q 150 200 162 195 Z']},
-  hombros:  {front:['M 82 165 Q 90 158 95 170 Q 88 178 80 175 Z','M 168 165 Q 160 158 155 170 Q 162 178 170 175 Z'], back:['M 82 165 Q 90 158 95 170 Q 88 178 80 175 Z','M 168 165 Q 160 158 155 170 Q 162 178 170 175 Z']},
-  biceps:   {front:['M 80 180 Q 87 175 90 195 Q 83 200 78 195 Z','M 170 180 Q 163 175 160 195 Q 167 200 172 195 Z'], back:[]},
-  triceps:  {front:[], back:['M 80 180 Q 87 175 90 195 Q 83 200 78 195 Z','M 170 180 Q 163 175 160 195 Q 167 200 172 195 Z']},
-  piernas:  {front:['M 100 290 Q 115 285 118 330 Q 108 335 98 330 Z','M 150 290 Q 135 285 132 330 Q 142 335 152 330 Z'], back:['M 100 290 Q 115 285 118 330 Q 108 335 98 330 Z','M 150 290 Q 135 285 132 330 Q 142 335 152 330 Z']},
-  abdomen:  {front:['M 108 215 Q 122 212 122 250 Q 108 252 108 250 Z'], back:[]},
-  cardio:   {front:['M 95 180 Q 155 180 155 250 Q 95 250 95 180 Z'], back:[]},
-  funcional:{front:['M 95 170 Q 155 170 155 260 Q 95 260 95 170 Z'], back:[]},
-};
-
-function MapaMuscular({entrenamientos}) {
-  const muscActivos = {};
-  const hoy = new Date();
-  const hace7 = new Date(hoy); hace7.setDate(hoy.getDate()-7);
-  
-  (entrenamientos||[]).forEach(e => {
-    const d = new Date(e.fecha);
-    if (d >= hace7) {
-      (e.ejercicios||[]).forEach(ej => {
-        const m = MUSCULOS_MAP[ej.nombre];
-        if (m) muscActivos[m] = (muscActivos[m]||0) + (ej.series||1);
-      });
-    }
-  });
-
-  const getColor = (musc) => {
-    const v = muscActivos[musc]||0;
-    if (v===0) return 'rgba(255,255,255,0.08)';
-    if (v<=2) return 'rgba(229,62,62,0.4)';
-    return 'rgba(229,62,62,0.85)';
-  };
-
-  const BodySVG = ({view}) => {
-    const parts = Object.entries(MUSCULO_SVG_PARTS);
-    return h('svg', {width:250, height:420, viewBox:'0 0 250 420'},
-      // Cabeza
-      h('ellipse', {cx:125, cy:100, rx:28, ry:32, fill:'rgba(255,255,255,0.12)', stroke:'rgba(255,255,255,0.2)', strokeWidth:1.5}),
-      // Cuello
-      h('rect', {x:116, y:130, width:18, height:20, rx:4, fill:'rgba(255,255,255,0.1)'}),
-      // Torso
-      h('path', {d:'M 90 150 Q 125 145 160 150 L 165 260 Q 125 265 85 260 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.15)', strokeWidth:1.5}),
-      // Brazos
-      h('path', {d:'M 90 155 Q 75 170 72 220 Q 68 235 74 240 Q 80 220 85 200 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
-      h('path', {d:'M 160 155 Q 175 170 178 220 Q 182 235 176 240 Q 170 220 165 200 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
-      // Antebrazos
-      h('path', {d:'M 74 240 Q 70 270 72 290 Q 76 295 80 290 Q 82 270 80 240 Z', fill:'rgba(255,255,255,0.07)'}),
-      h('path', {d:'M 176 240 Q 180 270 178 290 Q 174 295 170 290 Q 168 270 170 240 Z', fill:'rgba(255,255,255,0.07)'}),
-      // Piernas
-      h('path', {d:'M 95 260 Q 105 265 112 340 Q 108 345 100 340 Q 95 270 90 260 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
-      h('path', {d:'M 155 260 Q 145 265 138 340 Q 142 345 150 340 Q 155 270 160 260 Z', fill:'rgba(255,255,255,0.08)', stroke:'rgba(255,255,255,0.12)', strokeWidth:1}),
-      // Pantorrillas
-      h('path', {d:'M 100 340 Q 106 345 110 385 Q 106 390 100 385 Q 97 360 97 340 Z', fill:'rgba(255,255,255,0.07)'}),
-      h('path', {d:'M 150 340 Q 144 345 140 385 Q 144 390 150 385 Q 153 360 153 340 Z', fill:'rgba(255,255,255,0.07)'}),
-      // Pies
-      h('ellipse', {cx:104, cy:392, rx:14, ry:8, fill:'rgba(255,255,255,0.1)'}),
-      h('ellipse', {cx:146, cy:392, rx:14, ry:8, fill:'rgba(255,255,255,0.1)'}),
-      // Musculos activos
-      ...parts.map(([musc, paths]) => {
-        const viewPaths = view==='front' ? paths.front : paths.back;
-        return viewPaths.map((d,i) => h('path', {key:musc+i, d, fill:getColor(musc), stroke:muscActivos[musc]?'rgba(229,62,62,0.6)':'none', strokeWidth:1}));
-      }).flat()
-    );
-  };
-
-  return h('div', null,
-    h('div', {style:{display:'flex',justifyContent:'center',gap:40}},
-      h('div', {style:{textAlign:'center'}},
-        h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}, 'ANTERIOR'),
-        h(BodySVG, {view:'front'})
-      ),
-      h('div', {style:{textAlign:'center'}},
-        h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}, 'POSTERIOR'),
-        h(BodySVG, {view:'back'})
-      )
-    ),
-    h('div', {style:{display:'flex',gap:16,justifyContent:'center',marginTop:12}},
-      [{c:'rgba(255,255,255,0.08)',l:'Inactivo'},{c:'rgba(229,62,62,0.4)',l:'Leve'},{c:'rgba(229,62,62,0.85)',l:'Intenso'}].map(({c,l}) =>
-        h('div', {key:l, style:{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--t2)'}},
-          h('div', {style:{width:12,height:12,borderRadius:3,background:c,border:'1px solid rgba(255,255,255,0.15)'}}),
-          l
-        )
-      )
-    )
-  );
-}
-
-function PageEntrenamiento({state, setState, showToast}) {
-  const [tab, setTab] = useState('dashboard');
-  const [showNewRutina, setShowNewRutina] = useState(false);
-  const [showIniciar, setShowIniciar] = useState(null);
-  const [rutinaName, setRutinaName] = useState('');
-  const [rutinaEjercicios, setRutinaEjercicios] = useState([]);
-  const [catSel, setCatSel] = useState('pecho');
-  const [timerActive, setTimerActive] = useState(false);
-  const [timerSecs, setTimerSecs] = useState(0);
-  const [restTimer, setRestTimer] = useState(null);
-  const [restSecs, setRestSecs] = useState(0);
-  const timerRef = useRef(null);
-  const restRef = useRef(null);
-  const [logSets, setLogSets] = useState({});
-
-  const rutinas = state.rutinas || [];
-  const entrenamientos = state.entrenamientos || [];
+function PageEntrenamiento({state}) {
   const now = new Date();
   const mon = new Date(now); mon.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));
-  const wk = Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return{day:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'][i],date:d.getDate(),isToday:d.toDateString()===now.toDateString(),dateStr:d.toDateString()};});
-  const semanaEnt = wk.map(d => entrenamientos.some(e => new Date(e.fecha).toDateString()===d.dateStr));
-  const totalVol = entrenamientos.slice(-7).reduce((a,e)=>a+(e.ejercicios||[]).reduce((b,ej)=>b+(ej.series||0)*(ej.reps||0)*(ej.peso||0),0),0);
-  const score = Math.min(100, entrenamientos.filter(e=>{const d=new Date(e.fecha);const h=new Date();return d>new Date(h-7*86400000);}).length * 15);
-
-  // Timer entrenamiento
-  useEffect(()=>{
-    if(timerActive){ timerRef.current=setInterval(()=>setTimerSecs(s=>s+1),1000); }
-    else clearInterval(timerRef.current);
-    return ()=>clearInterval(timerRef.current);
-  },[timerActive]);
-
-  // Timer descanso
-  useEffect(()=>{
-    if(restTimer!==null && restSecs>0){
-      restRef.current=setInterval(()=>setRestSecs(s=>{if(s<=1){clearInterval(restRef.current);setRestTimer(null);showToast({icon:'💪',title:'Descanso terminado',sub:'Siguiente serie!'});return 0;}return s-1;}),1000);
-    }
-    return ()=>clearInterval(restRef.current);
-  },[restTimer]);
-
-  const fmtTime = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-
-  const addEjercicio = (nombre) => {
-    setRutinaEjercicios(prev => [...prev, {id:Date.now(), nombre, series:3, reps:12, peso:0, musculo:MUSCULOS_MAP[nombre]||'funcional'}]);
-  };
-
-  const saveRutina = () => {
-    if (!rutinaName.trim() || rutinaEjercicios.length===0) return;
-    setState(p=>({...p, rutinas:[...(p.rutinas||[]), {id:Date.now(), nombre:rutinaName, ejercicios:rutinaEjercicios, fecha:new Date().toLocaleDateString()}]}));
-    setRutinaName(''); setRutinaEjercicios([]); setShowNewRutina(false);
-  };
-
-  const finalizarEntrenamiento = (rutina) => {
-    const ejerciciosLog = (rutina.ejercicios||[]).map(ej => ({
-      ...ej,
-      series: parseInt(logSets[ej.id+'_series']||ej.series),
-      reps: parseInt(logSets[ej.id+'_reps']||ej.reps),
-      peso: parseFloat(logSets[ej.id+'_peso']||ej.peso),
-    }));
-    const vol = ejerciciosLog.reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0);
-    setState(p=>({
-      ...p,
-      entrenamientos:[...(p.entrenamientos||[]),{id:Date.now(),rutinaNombre:rutina.nombre,ejercicios:ejerciciosLog,duracion:timerSecs,fecha:new Date().toISOString(),volumen:vol}],
-      scores:{...p.scores, fisico:Math.min(100,(p.scores.fisico||0)+15)}
-    }));
-    setTimerActive(false); setTimerSecs(0); setShowIniciar(null); setLogSets({});
-    showToast({icon:'💪',title:'+15 Score Fisico!',sub:'Entrenamiento completado: '+rutina.nombre});
-  };
-
-  const delRutina = id => setState(p=>({...p, rutinas:(p.rutinas||[]).filter(r=>r.id!==id)}));
+  const wk = Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return{day:['Lun','Mar','Mie','Jue','Vie','Sab','Dom'][i],date:d.getDate(),isToday:d.toDateString()===now.toDateString()};});
 
   return h(Fragment, null,
     h('div', {style:{marginBottom:20}},
@@ -1962,219 +1850,37 @@ function PageEntrenamiento({state, setState, showToast}) {
       ),
       h('div', {style:{fontSize:13,color:'var(--t3)',marginTop:3}}, 'Entrenamiento y rendimiento')
     ),
-
-    // Tabs
-    h('div', {style:{display:'flex',background:'var(--bg3)',borderRadius:10,padding:4,marginBottom:20,gap:4}},
-      ['dashboard','rutinas','estadisticas'].map(t =>
-        h('button', {key:t, onClick:()=>setTab(t), style:{flex:1,padding:'9px',borderRadius:8,border:'none',background:tab===t?'var(--red)':'transparent',color:tab===t?'#fff':'var(--t2)',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'Inter',textTransform:'capitalize'}}, t.charAt(0).toUpperCase()+t.slice(1))
-      )
-    ),
-
-    // DASHBOARD TAB
-    tab==='dashboard' && h(Fragment, null,
-      h('div', {style:{background:'linear-gradient(135deg,var(--red),#c53030)',borderRadius:14,padding:'20px 24px',marginBottom:16,color:'#fff'}},
-        h('div', {className:'g3', style:{gap:20}},
-          h('div', null,
-            h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,opacity:.8,marginBottom:6}}, 'SCORE FISICO'),
-            h('div', {style:{fontSize:42,fontWeight:800}}, score, h('span', {style:{fontSize:20,opacity:.7}}, '/100')),
-            h('div', {style:{fontSize:12,opacity:.7,marginTop:3}}, entrenamientos.filter(e=>{const d=new Date(e.fecha);return d>new Date(Date.now()-7*86400000);}).length+' entrenamientos esta semana')
-          ),
-          h('div', null,
-            h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,opacity:.8,marginBottom:6}}, 'PESO ACTUAL'),
-            h('div', {style:{fontSize:42,fontWeight:800}}, state.pesoActual||'—'),
-            h('button', {onClick:()=>{const p=prompt('Peso actual (kg):');if(p)setState(prev=>({...prev,pesoActual:p}));}, style:{marginTop:6,background:'rgba(255,255,255,0.2)',border:'none',color:'#fff',padding:'5px 12px',borderRadius:20,fontSize:12,cursor:'pointer',fontFamily:'Inter'}}, '+ Registrar')
-          ),
-          h('div', null,
-            h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,opacity:.8,marginBottom:6}}, 'VOLUMEN TOTAL'),
-            h('div', {style:{fontSize:42,fontWeight:800}}, totalVol>0?totalVol.toFixed(0):0, h('span', {style:{fontSize:20,opacity:.7}}, ' KG')),
-            h('div', {style:{fontSize:12,opacity:.7,marginTop:3}}, 'Ultimos 7 dias')
-          )
-        )
-      ),
-
-      // Semana
-      h('div', {className:'card2', style:{marginBottom:16}},
-        h('div', {style:{fontSize:11,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:14}}, 'SEMANA'),
-        h('div', {style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:8}},
-          wk.map((d,i) =>
-            h('div', {key:i, style:{textAlign:'center'}},
-              h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:6}}, d.day),
-              h('div', {style:{width:40,height:40,borderRadius:8,background:semanaEnt[i]?'var(--green)':d.isToday?'var(--red)':'var(--bg4)',border:'1px solid '+(d.isToday&&!semanaEnt[i]?'var(--red)':'transparent'),display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:13,fontWeight:d.isToday?700:400,color:semanaEnt[i]||d.isToday?'#fff':'var(--t2)'}}, semanaEnt[i]?'✓':d.date)
-            )
-          )
-        )
-      ),
-
-      // Mapa muscular
+    h('div', {className:'g3', style:{marginBottom:18}},
       h('div', {className:'card2'},
-        h('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},
-          h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)'}}, 'Mapa Muscular'),
-          h('div', {style:{fontSize:12,color:'var(--t3)'}}, 'Ultimos 7 dias')
-        ),
-        h('div', {style:{fontSize:28,fontWeight:800,textAlign:'center',marginBottom:8}},
-          totalVol>0?totalVol.toFixed(0):0, h('span', {style:{fontSize:16,color:'var(--t3)',marginLeft:4}}, 'KG')
-        ),
-        h(MapaMuscular, {entrenamientos})
-      )
-    ),
-
-    // RUTINAS TAB
-    tab==='rutinas' && h(Fragment, null,
-      h('div', {style:{display:'flex',justifyContent:'flex-end',marginBottom:14}},
-        h('button', {className:'btn btn-r', onClick:()=>setShowNewRutina(true)}, '+ Nueva Rutina')
-      ),
-      rutinas.length===0
-        ? h('div', {className:'empty'},
-            h('div', {style:{fontSize:36,marginBottom:12}}, '🏋'),
-            h('div', {style:{fontSize:15,fontWeight:600,color:'var(--t2)',marginBottom:8}}, 'Sin rutinas todavia'),
-            h('button', {className:'btn btn-r', onClick:()=>setShowNewRutina(true)}, '+ Crear primera rutina')
-          )
-        : rutinas.map(r =>
-            h('div', {key:r.id, style:{background:'var(--bg2)',border:'1px solid var(--bor)',borderRadius:10,padding:'14px 16px',marginBottom:10,display:'flex',alignItems:'center',gap:12}},
-              h('div', {style:{flex:1}},
-                h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:3}}, r.nombre),
-                h('div', {style:{fontSize:12,color:'var(--t3)'}}, (r.ejercicios||[]).length+' ejercicios · Creada el '+r.fecha)
-              ),
-              h('button', {className:'del', onClick:()=>delRutina(r.id)}, '🗑'),
-              h('button', {
-                onClick:()=>{setShowIniciar(r);setTimerActive(true);setTimerSecs(0);},
-                style:{background:'var(--red)',color:'#fff',border:'none',padding:'8px 18px',borderRadius:20,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'Inter',display:'flex',alignItems:'center',gap:6}
-              }, '▶ Iniciar')
-            )
-          ),
-
-      // Modal nueva rutina
-      showNewRutina && h(Modal, {title:'Nueva Rutina', onClose:()=>setShowNewRutina(false)},
-        h(FG, {label:'NOMBRE DE LA RUTINA'},
-          h('input', {className:'inp', placeholder:'ej. Empuje A, Piernas, Full Body...', value:rutinaName, onChange:e=>setRutinaName(e.target.value), autoFocus:true})
-        ),
-        h(FG, {label:'CATEGORIA DE EJERCICIOS'},
-          h('div', {style:{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}},
-            Object.keys(EJERCICIOS_DB).map(cat =>
-              h('button', {key:cat, onClick:()=>setCatSel(cat), style:{padding:'5px 12px',borderRadius:20,border:'1px solid '+(catSel===cat?'var(--red)':'var(--bor)'),background:catSel===cat?'var(--red)':'transparent',color:catSel===cat?'#fff':'var(--t2)',fontSize:12,cursor:'pointer',fontFamily:'Inter',textTransform:'capitalize'}}, cat)
-            )
-          ),
-          h('div', {style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}},
-            EJERCICIOS_DB[catSel].map(ej =>
-              h('button', {key:ej, onClick:()=>addEjercicio(ej), style:{background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:8,padding:'8px 10px',fontSize:12,color:'var(--t2)',cursor:'pointer',fontFamily:'Inter',textAlign:'left',transition:'all .12s'}}, '+ '+ej)
-            )
-          )
-        ),
-        rutinaEjercicios.length>0 && h('div', {style:{marginTop:12}},
-          h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:8,textTransform:'uppercase',letterSpacing:1}}, 'EJERCICIOS AGREGADOS'),
-          rutinaEjercicios.map((ej,i) =>
-            h('div', {key:ej.id, style:{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'var(--bg4)',borderRadius:8,marginBottom:6}},
-              h('span', {style:{flex:1,fontSize:13,fontWeight:500}}, ej.nombre),
-              h('input', {type:'number',min:1,max:10,value:ej.series,onChange:e=>setRutinaEjercicios(prev=>prev.map((x,j)=>j===i?{...x,series:parseInt(e.target.value)}:x)),style:{width:42,background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:6,padding:'4px 6px',color:'#fff',fontSize:12,textAlign:'center'}, placeholder:'S'}),
-              h('span', {style:{fontSize:11,color:'var(--t3)'}}, 'x'),
-              h('input', {type:'number',min:1,max:50,value:ej.reps,onChange:e=>setRutinaEjercicios(prev=>prev.map((x,j)=>j===i?{...x,reps:parseInt(e.target.value)}:x)),style:{width:42,background:'var(--bg3)',border:'1px solid var(--bor)',borderRadius:6,padding:'4px 6px',color:'#fff',fontSize:12,textAlign:'center'}, placeholder:'R'}),
-              h('button', {onClick:()=>setRutinaEjercicios(prev=>prev.filter((_,j)=>j!==i)), style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:14}}, '✕')
-            )
-          )
-        ),
-        h('div', {style:{display:'flex',gap:10,justifyContent:'flex-end',marginTop:12}},
-          h('button', {className:'btn btn-ghost', onClick:()=>setShowNewRutina(false)}, 'Cancelar'),
-          h('button', {className:'btn btn-r', onClick:saveRutina, disabled:!rutinaName||rutinaEjercicios.length===0}, 'Guardar Rutina')
-        )
-      ),
-
-      // Modal iniciar entrenamiento
-      showIniciar && h('div', {className:'ov', onClick:e=>e.target===e.currentTarget&&null},
-        h('div', {className:'mod', style:{width:520}},
-          h('div', {style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}},
-            h('div', {style:{fontSize:16,fontWeight:700}}, showIniciar.nombre),
-            h('div', {style:{fontSize:32,fontWeight:800,color:'var(--red)',fontFamily:'monospace'}}, fmtTime(timerSecs))
-          ),
-          h('div', {style:{background:'var(--bg3)',borderRadius:10,padding:'12px',marginBottom:16}},
-            h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:10,textTransform:'uppercase',letterSpacing:1}}, 'REGISTRAR SETS'),
-            (showIniciar.ejercicios||[]).map(ej =>
-              h('div', {key:ej.id, style:{marginBottom:14,paddingBottom:14,borderBottom:'1px solid var(--bor)'}},
-                h('div', {style:{fontSize:14,fontWeight:600,marginBottom:8,color:'var(--t2)'}}, ej.nombre),
-                h('div', {style:{display:'flex',gap:10,alignItems:'center'}},
-                  h('div', {style:{flex:1}},
-                    h('div', {style:{fontSize:10,color:'var(--t3)',marginBottom:4}}, 'SERIES'),
-                    h('input', {type:'number',min:1,max:10,defaultValue:ej.series,onChange:e=>setLogSets(p=>({...p,[ej.id+'_series']:e.target.value})),className:'inp',style:{padding:'6px 10px',textAlign:'center'}})
-                  ),
-                  h('div', {style:{flex:1}},
-                    h('div', {style:{fontSize:10,color:'var(--t3)',marginBottom:4}}, 'REPS'),
-                    h('input', {type:'number',min:1,max:50,defaultValue:ej.reps,onChange:e=>setLogSets(p=>({...p,[ej.id+'_reps']:e.target.value})),className:'inp',style:{padding:'6px 10px',textAlign:'center'}})
-                  ),
-                  h('div', {style:{flex:1}},
-                    h('div', {style:{fontSize:10,color:'var(--t3)',marginBottom:4}}, 'PESO (KG)'),
-                    h('input', {type:'number',min:0,step:2.5,defaultValue:ej.peso,onChange:e=>setLogSets(p=>({...p,[ej.id+'_peso']:e.target.value})),className:'inp',style:{padding:'6px 10px',textAlign:'center'}})
-                  )
-                )
-              )
-            )
-          ),
-          restTimer!==null && h('div', {style:{background:'rgba(237,137,54,0.1)',border:'1px solid rgba(237,137,54,0.3)',borderRadius:8,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',justifyContent:'space-between'}},
-            h('span', {style:{fontSize:14,color:'var(--orange)',fontWeight:600}}, '⏱ Descanso'),
-            h('span', {style:{fontSize:28,fontWeight:800,fontFamily:'monospace',color:'var(--orange)'}}, fmtTime(restSecs)),
-            h('button', {onClick:()=>{clearInterval(restRef.current);setRestTimer(null);setRestSecs(0);}, style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:14}}, 'Saltar')
-          ),
-          h('div', {style:{display:'flex',gap:8}},
-            h('button', {onClick:()=>{setRestTimer(Date.now());setRestSecs(60);}, className:'btn btn-ghost', style:{flex:1,justifyContent:'center'}}, '⏱ Descanso 60s'),
-            h('button', {onClick:()=>{setRestTimer(Date.now());setRestSecs(90);}, className:'btn btn-ghost', style:{flex:1,justifyContent:'center'}}, '⏱ Descanso 90s')
-          ),
-          h('div', {style:{display:'flex',gap:10,marginTop:12}},
-            h('button', {onClick:()=>{setShowIniciar(null);setTimerActive(false);setTimerSecs(0);}, className:'btn btn-ghost', style:{flex:1,justifyContent:'center'}}, 'Cancelar'),
-            h('button', {onClick:()=>finalizarEntrenamiento(showIniciar), className:'btn btn-r', style:{flex:2,justifyContent:'center',fontSize:15}}, '✓ Finalizar Entrenamiento')
-          )
-        )
-      )
-    ),
-
-    // ESTADISTICAS TAB
-    tab==='estadisticas' && h(Fragment, null,
-      h('div', {className:'g2', style:{marginBottom:16}},
-        h('div', {className:'card2'},
-          h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'TOTAL ENTRENAMIENTOS'),
-          h('div', {style:{fontSize:42,fontWeight:800}}, entrenamientos.length)
-        ),
-        h('div', {className:'card2'},
-          h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'VOLUMEN TOTAL'),
-          h('div', {style:{fontSize:42,fontWeight:800,color:'var(--red)'}},
-            entrenamientos.reduce((a,e)=>a+(e.ejercicios||[]).reduce((b,ej)=>b+ej.series*ej.reps*ej.peso,0),0).toFixed(0),
-            h('span', {style:{fontSize:18,color:'var(--t3)',marginLeft:4}}, 'KG')
-          )
-        )
-      ),
-      h('div', {className:'card2', style:{marginBottom:16}},
-        h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:14}}, 'Evolucion de Volumen'),
-        entrenamientos.length===0
-          ? h('div', {className:'empty'}, 'Sin entrenamientos registrados aun')
-          : h('div', null,
-              entrenamientos.slice(-10).map((e,i) => {
-                const vol = (e.ejercicios||[]).reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0);
-                const maxVol = Math.max(...entrenamientos.map(x=>(x.ejercicios||[]).reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0)),1);
-                return h('div', {key:e.id, style:{display:'flex',alignItems:'center',gap:10,marginBottom:8}},
-                  h('div', {style:{fontSize:11,color:'var(--t3)',width:70,flexShrink:0}}, new Date(e.fecha).toLocaleDateString('es',{day:'2-digit',month:'short'})),
-                  h('div', {style:{flex:1,height:24,background:'var(--bg4)',borderRadius:4,overflow:'hidden'}},
-                    h('div', {style:{height:'100%',width:(vol/maxVol*100)+'%',background:'var(--red)',borderRadius:4,display:'flex',alignItems:'center',paddingLeft:8,fontSize:11,fontWeight:600,color:'#fff',transition:'width .5s'}}, vol>0?vol.toFixed(0)+' KG':'')
-                  ),
-                  h('div', {style:{fontSize:11,color:'var(--t3)',width:80,flexShrink:0,textAlign:'right'}}, e.rutinaNombre)
-                );
-              })
-            )
+        h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'SCORE FISICO'),
+        h('div', {style:{fontSize:28,fontWeight:800}}, (state.scores.fisico||0)+'/100'),
+        h('div', {style:{fontSize:12,color:'var(--t3)',marginTop:3}}, '0 entrenamientos esta semana')
       ),
       h('div', {className:'card2'},
-        h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:14}}, 'Historial de Entrenamientos'),
-        entrenamientos.length===0
-          ? h('div', {className:'empty'}, 'Sin entrenamientos registrados aun')
-          : entrenamientos.slice().reverse().slice(0,10).map(e =>
-              h('div', {key:e.id, style:{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:'1px solid var(--bor)'}},
-                h('div', {style:{width:42,height:42,borderRadius:10,background:'rgba(229,62,62,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}, '💪'),
-                h('div', {style:{flex:1}},
-                  h('div', {style:{fontSize:13,fontWeight:600}}, e.rutinaNombre),
-                  h('div', {style:{fontSize:11,color:'var(--t3)',marginTop:2}}, new Date(e.fecha).toLocaleDateString('es',{weekday:'long',day:'numeric',month:'short'})+' · '+fmtTime(e.duracion||0))
-                ),
-                h('div', {style:{textAlign:'right'}},
-                  h('div', {style:{fontSize:14,fontWeight:700,color:'var(--red)'}}, ((e.ejercicios||[]).reduce((a,ej)=>a+ej.series*ej.reps*ej.peso,0)).toFixed(0)+' KG'),
-                  h('div', {style:{fontSize:11,color:'var(--t3)'}}, (e.ejercicios||[]).length+' ejercicios')
-                )
-              )
-            )
+        h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'PESO ACTUAL'),
+        h('div', {style:{fontSize:28,fontWeight:800,color:'var(--t3)'}}, '—'),
+        h('button', {className:'btn btn-ghost btn-sm', style:{marginTop:8}}, '+ Registrar peso')
+      ),
+      h('div', {className:'card2'},
+        h('div', {style:{fontSize:10,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:8}}, 'VOLUMEN TOTAL'),
+        h('div', {style:{fontSize:28,fontWeight:800,color:'var(--red)'}}, '0 KG'),
+        h('div', {style:{fontSize:12,color:'var(--t3)',marginTop:3}}, 'Ultimos 7 dias')
       )
+    ),
+    h('div', {className:'card2', style:{marginBottom:18}},
+      h('div', {style:{fontSize:11,fontWeight:700,letterSpacing:1,textTransform:'uppercase',color:'var(--t3)',marginBottom:14}}, 'SEMANA'),
+      h('div', {style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:8}},
+        wk.map((d,i) =>
+          h('div', {key:i, style:{textAlign:'center'}},
+            h('div', {style:{fontSize:11,color:'var(--t3)',marginBottom:6}}, d.day),
+            h('div', {style:{width:40,height:40,borderRadius:8,background:d.isToday?'var(--red)':'var(--bg4)',border:'1px solid '+(d.isToday?'var(--red)':'var(--bor)'),display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto',fontSize:14,fontWeight:d.isToday?700:400}}, d.date)
+          )
+        )
+      )
+    ),
+    h('div', {className:'card2'},
+      h('div', {style:{fontSize:15,fontWeight:700,color:'var(--red)',marginBottom:14}}, 'Mapa Muscular'),
+      h('div', {style:{textAlign:'center',color:'var(--t3)',padding:'20px'}}, '0 KG — Completa entrenamientos para ver el mapa muscular')
     )
   );
 }
@@ -2202,7 +1908,7 @@ function PagePerfil({state, setState, setPage}) {
         ),
         h('div', {style:{flex:1,minWidth:200}},
           h('div', {style:{fontSize:22,fontWeight:800,marginBottom:4}}, user.name),
-          h('div', {style:{fontSize:13,color:'var(--t3)',marginBottom:8}}, (window._supaUser && window._supaUser.email) || user.email || 'usuario@email.com'),
+          h('div', {style:{fontSize:13,color:'var(--t3)',marginBottom:8}}, user.email||'usuario@email.com'),
           h('div', {style:{display:'flex',alignItems:'center',gap:6,marginBottom:8}},
             h('span', {style:{fontSize:14,fontWeight:600,color:'var(--green)'}}, levelName),
             h('span', {style:{fontSize:12,color:'var(--t3)'}}, '— Iniciando la jornada')
@@ -2215,7 +1921,7 @@ function PagePerfil({state, setState, setPage}) {
             h('div', {style:{height:'100%',width:xpPct+'%',background:'var(--red)',borderRadius:3}})
           ),
           h('div', {style:{display:'flex',gap:20,flexWrap:'wrap'}},
-            [{val:xp,label:'XP Total'},{val:maxStreak,label:'Racha',icon:'🔥'},{val:maxStreak,label:'Racha max'},{val:1,label:'Logros'}].map((s,i) =>
+            [{val:xp,label:'XP Total'},{val:maxStreak,label:'Racha',icon:'Flame'},{val:maxStreak,label:'Racha max'},{val:1,label:'Logros'}].map((s,i) =>
               h('div', {key:i, style:{textAlign:'center'}},
                 h('div', {style:{fontSize:20,fontWeight:800,display:'flex',alignItems:'center',gap:4,justifyContent:'center'}}, s.val, s.icon&&h('span',{style:{fontSize:16}},s.icon)),
                 h('div', {style:{fontSize:10,color:'var(--t3)',marginTop:2}}, s.label)
@@ -2308,12 +2014,6 @@ function PageConfig({state, setState, darkMode, setDarkMode, handleNotif}) {
       localStorage.removeItem(SK); location.reload();
     }
   };
-  const signOut = async () => {
-    if (confirm('Cerrar sesion?')) {
-      if (window._elitelabSignOut) await window._elitelabSignOut();
-      else location.reload();
-    }
-  };
 
   return h(Fragment, null,
     h('div', {style:{fontSize:22,fontWeight:800,marginBottom:4}}, 'Configuracion'),
@@ -2392,7 +2092,7 @@ function PageConfig({state, setState, darkMode, setDarkMode, handleNotif}) {
     ),
 
     h('div', {style:{textAlign:'center',padding:'10px'}},
-      h('button', {onClick:signOut, style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:13,fontFamily:'Inter'}}, '→ Cerrar sesion')
+      h('button', {onClick:reset, style:{background:'none',border:'none',cursor:'pointer',color:'var(--t3)',fontSize:13,fontFamily:'Inter'}}, '→ Cerrar sesion')
     )
   );
 }
@@ -2406,7 +2106,7 @@ function PageComingSoon({title}) {
 }
 
 // ── APP ───────────────────────────────────────────────────────────────
-function _DashboardApp() {
+function App() {
   const [state, setRaw] = useState(loadState);
   const [page, setPage] = useState('dashboard');
   const [toast, setToast] = useState(null);
@@ -2487,6 +2187,10 @@ function _DashboardApp() {
       case 'progreso':     return h(PageProgreso, p);
       case 'logros':       return h(PageLogros, p);
       case 'plan':         return h(PagePlan, p);
+      case 'cronograma':   return h(PageComingSoon, {title:'Cronograma'});
+      case 'dieta':        return h(PageComingSoon, {title:'Dieta'});
+      case 'wallpapers':   return h(PageComingSoon, {title:'Wallpapers'});
+      case 'familia':      return h(PageComingSoon, {title:'Familia'});
       case 'perfil':       return h(PagePerfil, p);
       case 'config':       return h(PageConfig, {...p, darkMode, setDarkMode});
       default:             return h(PageComingSoon, {title: PAGE_LABELS[page]||page});
@@ -2508,7 +2212,7 @@ function _DashboardApp() {
       NAV.map(sec => h('div', {key:sec.sec},
         h('div', {className:'sb-sec'}, sec.sec),
         sec.items.map(it => h('div', {key:it.id, className:'ni'+(page===it.id?' active':''), onClick:()=>setPage(it.id)},
-          h('span', {className:'ni-ico'}, it.ico),
+          h(NI, {name:it.ico, active:page===it.id}),
           h('span', null, it.l),
           it.badge && h('span', {className:'badge '+it.bc}, it.badge)
         ))
@@ -2561,63 +2265,6 @@ try { window.addEventListener('appinstalled',()=>{window._dip=null;window._insta
 ReactDOM.createRoot(document.getElementById('app')).render(React.createElement(App));
 
 
-
-// ── AUTHENTICATED APP WRAPPER ─────────────────────────────────────────
-const _OriginalApp = _DashboardApp;
-
-function App() {
-  const [authState, setAuthState] = React.useState('loading'); // loading | auth | app
-  const [supaUser, setSupaUser] = React.useState(null);
-
-  React.useEffect(() => {
-    // Check session from localStorage instantly - no network call
-    const token = localStorage.getItem('supa_token');
-    const userStr = localStorage.getItem('supa_user');
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        supa.auth._token = token;
-        supa.auth._user = user;
-        setSupaUser(user);
-        setAuthState('app');
-        return;
-      } catch(e) {}
-    }
-    setAuthState('auth');
-  }, []);
-
-  const handleAuth = (user) => {
-    setSupaUser(user);
-    setAuthState('app');
-  };
-
-  const handleSignOut = async () => {
-    await supa.auth.signOut();
-    setSupaUser(null);
-    setAuthState('auth');
-    // Clear localStorage app data
-    localStorage.removeItem('elitelab_v4');
-  };
-
-  if (authState === 'loading') {
-    return React.createElement('div', {
-      style:{minHeight:'100vh',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif',flexDirection:'column',gap:16}
-    },
-      React.createElement('div', {style:{width:54,height:54,borderRadius:12,background:'#e53e3e',display:'flex',alignItems:'center',justifyContent:'center',fontSize:30,fontStyle:'italic',fontWeight:800,fontFamily:'Georgia,serif',color:'#fff'}}, 'E'),
-      React.createElement('div', {style:{color:'rgba(255,255,255,0.4)',fontSize:14}}, 'Cargando EliteLab...')
-    );
-  }
-
-  if (authState === 'auth') {
-    return React.createElement(AuthPage, {onAuth: handleAuth});
-  }
-
-  // Inject signOut into the app via a global
-  window._elitelabSignOut = handleSignOut;
-  window._supaUser = supaUser;
-
-  return React.createElement(_OriginalApp, null);
-}
 </script>
 </body>
 </html>
